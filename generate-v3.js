@@ -16,6 +16,7 @@ let rooms = simulation[1].rooms;
 let _Start = settings.start;
 let _Increment = parseInt(settings.increment);
 let _Days = simulation[0].settings[0].days;
+let _Watchfulness = settings.watchfulness;
 
 // Create appliance objects as per appliance inits data:
 let applianceObjects = [];
@@ -54,7 +55,7 @@ rooms.forEach((room) => {
 });
 
 // Create an agent:
-let watchfulness = 0.5; // determines how often the agent turns devices fully off after turning them on
+let watchfulness = 0.0; // determines how often the agent turns devices fully off after turning them on
 agent = new Agent(watchfulness);
 
 // Variables for running simulation:
@@ -81,6 +82,7 @@ console.log("Total timesteps: " + timesteps);
 
 const delay = 0;
 let t = 0; 
+let percentage_completed = 0; 
 
 weekdays = [1, 2, 3, 4];
 weekends = [0, 6];
@@ -92,14 +94,12 @@ function simulationForward() {
     setTimeout(function() {   
         // ... I'm setting a timeout just to be able to track the 'ticks' of the function in the console
         
-        // Each appliance object has a timeleft value
-        // The below code goes through each appliance and ticks down the time
-        applianceObjects.forEach( (applianceObject) => { 
-             if(applianceObject.timeleft > 0) { 
-                 applianceObject.timeleft--;
-             }
-        });
-        
+        percentage_completed_update = Math.floor(100*(t/timesteps)); 
+        if(percentage_completed_update !== percentage_completed) {
+            console.log("Percentage completed: " + percentage_completed);
+            percentage_completed = percentage_completed_update;
+        }
+
         // Get time information based on current timestamp
         let fakeDate = new Date(timestamp * 1000);
         let newDayOfWeek = fakeDate.getUTCDay();
@@ -203,24 +203,84 @@ function simulationForward() {
         }
  // -- End of Days/Time-based Triggering
 
-        console.log('TIMESTEP #: ' + t);
+        //console.log('TIMESTEP #: ' + t);
 
+// Each appliance object has a timeleft value
+// The below code goes through each appliance and ticks down the time every timestep
+        applianceObjects.forEach( (applianceObject) => { 
+            if(applianceObject.timeleft > 0) { 
+                applianceObject.timeleft--;
+            }
+       });
+       
  // Start of Triggering Based on Motivations and Conditions
+
+        if(!agent.awake) { 
+            //console.log("Agent is sleeping.");
+        }
 
         if(agent.home && agent.awake) {
 
             if(agent.cooking) { 
-                console.log('Agent is cooking.'); 
-            } else {
-                console.log('Agent is not cooking.');
-            }
+                //console.log('Agent is cooking.'); 
+            } 
 
+            lights = applianceObjects.filter( (applianceObject) => { return applianceObject.type == 'light' } );
             hunger_appliances = applianceObjects.filter( (applianceObject) => { return applianceObject.motive == 'hunger' } );
             boredom_appliances = applianceObjects.filter( (applianceObject) => { return applianceObject.motive == 'boredom' } );
 
-            // At a certain timestep, 
+            comfort_appliances = applianceObjects.filter( (applianceObject) => { return applianceObject.motive == 'comfort' } );
+            cleanliness_appliances = applianceObjects.filter( (applianceObject) => { return applianceObject.motive == 'cleanliness' } );
+            hygiene_appliances = applianceObjects.filter( (applianceObject) => { return applianceObject.motive == 'hygiene' } );
+
+           // console.log(comfort_appliances, cleanliness_appliances, hygiene_appliances);
+
+            // Handle lights randomly
+            if(Math.random() > 0.990) {
+                // Turn on a random light
+                lights.sort(function() { return 0.5 - Math.random();});
+                selected_lights = lights.slice(0, lights.length); 
+                selected_lights.forEach((selected_light) => {
+                    agent.changeApplianceState(selected_light);
+                });
+            }
+
+            // Handle comfort_appliances randomly
+            if(Math.random() > 0.990) {
+                // Turn on a random appliance
+                comfort_appliances.sort(function() { return 0.5 - Math.random();});
+                selected_comfort_appliances = comfort_appliances.slice(0, comfort_appliances.length); 
+                
+                selected_comfort_appliances.forEach((selected_comfort_appliance) => {
+                    console.log('Changing state of ' + selected_comfort_appliance.id);
+                    agent.changeApplianceState(selected_comfort_appliance);
+                });
+            }
+
+            // Handle hygiene_appliances randomly
+            if(Math.random() > 0.990) {
+                // Turn on a random appliance
+                hygiene_appliances.sort(function() { return 0.5 - Math.random();});
+                selected_hygiene_appliances = hygiene_appliances.slice(0, hygiene_appliances.length); 
+                selected_hygiene_appliances.forEach((hygiene_appliance) => {
+                    agent.changeApplianceState(hygiene_appliance);
+                });
+            }
+
+            // Handle cleanliness_appliances randomly
+            if(Math.random() > 0.990) {
+                // Turn on a random appliance
+                cleanliness_appliances.sort(function() { return 0.5 - Math.random();});
+                selected_cleanliness_appliances = cleanliness_appliances.slice(0, cleanliness_appliances.length); 
+                selected_cleanliness_appliances.forEach((cleanliness_appliance) => {
+                    agent.changeApplianceState(cleanliness_appliance);
+                });
+            }
+
+            // Hunger
             if(agent.hungerLevel >= 1.0 && !agent.cooking) {
                 console.log('Agent is hungry.');
+
                 // Randomize
                 hunger_appliances.sort(function() { return 0.5 - Math.random();});
                 
@@ -239,16 +299,72 @@ function simulationForward() {
                     sum += hunger_appliance.timeleft;   
                     agent.changeApplianceState(hunger_appliance);                 
                 }); 
-                console.log('Sum is ' + sum);
+                //console.log('Sum is ' + sum);
                 if (sum == 0) {
                     console.log('Agent has eaten.');
                     agent.eat();
                 }
             }
 
-            if(agent.boredomLevel >= 1.0) {
-                // do boredom stuff
+            // Boredom
+            //console.log('boredomLevel: ' + agent.boredomLevel); 
+            //console.log('agent.beingEntertained ' + agent.beingEntertained);
+
+            if(agent.boredomLevel >= 1.0 && !agent.beingEntertained) {
+                console.log('Agent is bored.');
+                // Randomize
+                boredom_appliances.sort(function() { return 0.5 - Math.random();});
+                
+                // 1 or more and less than half
+                number_of_boredom_appliances = getRandomInt(1, boredom_appliances.length/2);
+                selected_boredom_appliances = boredom_appliances.slice(0, number_of_boredom_appliances); 
+                
+                selected_boredom_appliances.forEach( (boredom_appliance) => {
+                    agent.changeApplianceState(boredom_appliance);
+                });
             }
+            
+            if(agent.boredomLevel >= 1.0 && agent.beingEntertained) {
+                sum = 0;
+                boredom_appliances.forEach( (boredom_appliance) => {
+                    sum += boredom_appliance.timeleft;   
+                    agent.changeApplianceState(boredom_appliance);                 
+                }); 
+                //console.log('Sum is ' + sum);
+                if (sum == 0) {
+                    console.log('Agent has been entertained.');
+                    agent.entertained();
+                }
+            }
+
+            lights.forEach( (light) => {
+                if(light.state == 1 && light.timeleft == 0) {
+                    console.log('Turning off ' + light.id);
+                    light.turnOff();
+                }
+            });
+
+            comfort_appliances.forEach( (comfort_appliance) => {
+                if(comfort_appliance.state == 1 && comfort_appliance.timeleft == 0) {
+                    console.log('Turning off ' + comfort_appliance.id);
+                    agent.changeApplianceState(comfort_appliance);
+                }
+            });
+
+            hygiene_appliances.forEach( (hygiene_appliance) => {
+                if(hygiene_appliance.state == 1 && hygiene_appliance.timeleft == 0) {
+                    console.log('Turning off ' + hygiene_appliance.id);
+                    agent.changeApplianceState(hygiene_appliance);
+                }
+            });
+
+            cleanliness_appliances.forEach( (cleanliness_appliance) => {
+                if(cleanliness_appliance.state == 1 && cleanliness_appliance.timeleft == 0) {
+                    console.log('Turning off ' + cleanliness_appliance.id);
+                    agent.changeApplianceState(cleanliness_appliance);
+                }
+            });
+
         }
 
         //applianceObjects.forEach( (applianceObject) => {
@@ -278,7 +394,7 @@ function simulationForward() {
 
         // Motivations change per timestep in agent
         agent.hungerLevel += 0.0025;
-        agent.boredomLevel += 0.00069;
+        agent.boredomLevel += 0.0025;
 
         let i = 0; 
         rooms.forEach((room) => {

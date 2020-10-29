@@ -20,9 +20,10 @@ app.use(express.urlencoded({extended: false}));
 const PORT = process.env.PORT || 5002;
 
 
-app.get('/test.json', (req, res) => {
+app.get('/*.json', (req, res) => {
     //let filepath = path.join("./", "test.json");
-    const json = require("./test.json");
+    //console.log(req.url);
+    const json = require("./"+req.url);
     res.json(json);
 });
 
@@ -36,6 +37,7 @@ app.get('/empty', (req, res) => {
 app.get('/view', (req, res) => {
     res.json(house);
 });
+
 
 // add a room to the house
 app.post('/add-room', (req, res) => {
@@ -77,15 +79,36 @@ app.post('/add-appliance', (req, res) => {
     }
 });
 
+app.post('/remove-appliance', (req, res) => {
+    let room_id = req.body.room_id;
+    let appliance_id = req.body.appliance_id;
+    console.log(room_id,appliance_id);
+    let i = 0;
+    house.forEach((room) => {
+        if(room.room_id === room_id) {
+            let j = 0; 
+            room.appliances.forEach((appliance) => {
+                if(appliance.appliance_id == appliance_id) { 
+                    house[i].appliances.splice(j, 1);
+                }
+                j++;
+            });
+        }
+        i++;
+    });
+    res.redirect('/');
+});
+
 app.get('/save', (req, res) => {
     // add layout info here? 
     let json = JSON.stringify(house, null, 4);
     fs.writeFile('./setup_data.json', json, (err) => {
         if (err) throw err;
-        console.log('Wrote setup data!');
+        console.log('Wrote setup data to /setup_data.json!');
         res.json({'success' : 'true'});
     });
 });
+
 
 app.post('/save', (req, res) => {
     settings = [];
@@ -102,6 +125,50 @@ app.post('/save', (req, res) => {
     });
 });
 
+app.post('/typicalHouse', (req, res) => {
+    settings = [];
+    settings.push(req.body);
+
+    parsedJSON = require('./typical_house_setup.json');
+    rooms = parsedJSON[0].rooms;
+
+    //console.log(parsedJSON, rooms);
+
+    data = [];
+    data.push({settings});
+    data.push({rooms});
+    let json = JSON.stringify(data, null, 4);
+    fs.writeFile('./setup_data.json', json, (err) => {
+        if (err) throw err;
+        console.log('Wrote setup data!');
+        res.json({'success' : 'true'});
+    });
+});
+
+app.get('/checkSetup', (req, res) => {
+    fs.readFile('./setup_data.json', (err, data) => {
+        if(err) { 
+            res.json({'err' : err, 'setupExists' : false});
+        } else {
+            res.json({'setupExists' : true});
+        }
+    });
+});
+
+app.post('/checkSetup', (req, res) => {
+    chkId = req.body.setupId;
+    console.log(chkId);
+    fs.readdir('./setups', (err, files) => {
+        match = false;
+        files.forEach((file) => {
+            if(file.split(".")[0] == chkId) {
+                match = true;
+            }
+        });
+    });
+    res.json({"chkId" : chkId, "exists" : match});
+});
+
 app.get('/', (req, res) => {
     //res.json({ msg: 'msg' });
     res.render('index', 
@@ -109,59 +176,76 @@ app.get('/', (req, res) => {
     );
 });
 
-app.get('/ietest', (req, res) => {
-    //res.json({ msg: 'msg' });
-    res.render('ietest');
-});
-
-app.get('/graphs/:output_id', (req, res) => {
+app.get('/results/:results_filename_id/:type', (req, res) => {
     filenames = fs.readdirSync(path.join(__dirname, "outputs"));
-    search_filename = req.params.output_id + ".json"; 
-    console.log('search_filename: ' + search_filename);
-    fs.readFile( path.join(__dirname, "outputs", search_filename), (err, data) => {
-        if(err) { 
-            result_status = "failed"; 
+    results_filename = req.params.results_filename_id + ".json";
+    type = req.params.type; 
 
-            condensed_dataset = [];
-            res.render('graphs', 
-            { condensed_dataset, filenames,
-                helpers: { 
-                    json: function (context) { return JSON.stringify(context); } 
+    console.log('results_filename: ' + results_filename);
+
+    fs.readFile( path.join(__dirname, "outputs", results_filename), (err, data) => {
+        if(err) {
+            dataset = []; // empty dataset because of an error
+
+            res.render('results', 
+                { dataset, filenames,
+                    helpers: { 
+                        json: function (context) { return JSON.stringify(context); } 
+                    }
                 }
-            }
-        );
+            );
         } else { 
-            result_status = "success";
+            const json_data = JSON.parse(data);
 
-            // process the file data 
-            const dataset = JSON.parse(data);
-        
-            let settings = dataset[0];
-            let rooms = dataset[1]; 
+            let settings = json_data[0];
+            let rooms = json_data[1]; 
 
-            // condense data
-            let condensed_dataset = [];
-            //rooms = condense_hourly(rooms);
-            condensed_dataset.push(settings);
-            condensed_dataset.push(rooms);
+            // you can do stuff with rooms/settings here ... 
 
-            res.render('graphs', 
-            { condensed_dataset, filenames,
-                helpers: { 
-                    json: function (context) { return JSON.stringify(context); } 
+            if(type == 'total') {
+                rooms.forEach((room) => {
+                    room.appliances.forEach(
+                        (appliance) => {
+                            newY = [];
+                            sumY = 0;
+                            for(i = 0; i < appliance.data[0].y.length; i++ ){
+                                sumY += appliance.data[0].y[i];
+                                newY.push(sumY);
+                            }
+                            appliance.data[0].y = newY;
+                        }
+                    );
+                    newY = [];
+                    sumY = 0;
+                    for(i = 0; i < room.total_data[0].y.length; i++ ){
+                        sumY += room.total_data[0].y[i];
+                        newY.push(sumY);
+                    }
+                    room.total_data[0].y = newY;
+                });
+            } 
+     
+            let dataset = [];
+
+            dataset.push(settings);
+            dataset.push(rooms);
+
+            res.render('results', 
+                { dataset, filenames,
+                    helpers: { 
+                        json: function (context) { return JSON.stringify(context); } 
+                    }
                 }
-            }
-        );
-
+            );
         }
     });
 });
 
 // without params
-app.get('/graphs', (req, res) => {
+app.get('/results', (req, res) => {
     // JSON data set from /generate
     
-    console.log(req['params']);
+    //console.log(req['params']);
 
     filenames = fs.readdirSync(path.join(__dirname, "outputs"));
     filename = filenames[0];
@@ -175,17 +259,16 @@ app.get('/graphs', (req, res) => {
         let rooms = dataset[1];
 
         // condendsing data: 
-        let condensed_dataset = [];
         //rooms = condense_hourly(rooms);
-        condensed_dataset.push(settings);
-        condensed_dataset.push(rooms);
+        dataset.push(settings);
+        dataset.push(rooms);
 
         let foldername = path.join(__dirname, 'outputs');
         var filenames = fs.readdirSync(foldername);
         //console.log(condensed_dataset);
 
-        res.render('graphs', 
-            { condensed_dataset, filenames,
+        res.render('results', 
+            { dataset, filenames,
                 helpers: { 
                     json: function (context) { return JSON.stringify(context); } 
                 }
@@ -196,12 +279,12 @@ app.get('/graphs', (req, res) => {
 
 app.get('/generate', (req, res) => {
     // Now we can run a script and invoke a callback when complete, e.g.
-    runScript('./generate-v3.js', function (err) {
+    runScript('./generate-silent.js', function (err) {
         if (err) throw err;
+        // code that executes once generation is done... 
         console.log('Generated!');
         res.json({ success: true });
     });
-
 });
 
 const applianceInits = require('./applianceInits.js');
@@ -210,6 +293,37 @@ app.get('/appliance-data.js', (req, res) => {
             res.json(applianceInits);
     });
 });
+
+app.get('/jsonResults(/:id)?', (req, res) => {
+    fileId = req.params.id;
+    console.log(fileId);
+    if(!fileId) {
+        console.log('No id');
+        fs.readdir('./outputs', (err, files) => {
+            if(err) throw err;
+            console.log(files);
+        });
+    }
+    let json = null;
+    fs.readdir('outputs', function(err, files) {
+        if(err) throw err;
+        match = false;
+        files.forEach(function (filename) {
+            id = filename.split(".")[0];
+            if(id == fileId) {
+                match = true;
+                json = fs.readFileSync('./outputs/'+filename, 'utf8');
+                json = JSON.parse(json);
+                res.json(json);
+            }
+        });
+        if (!match) { 
+            json = {"result" : "no matching id"};
+            res.json(json);
+        }
+    });
+});
+
 
 app.listen(PORT, () => {
     console.log('Running server on port 5002.');

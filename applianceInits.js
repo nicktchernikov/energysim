@@ -2,7 +2,7 @@ const appliance_inits = [
 	{
 		type : 'fridge',
 		watts1 : 200,
-		watts2 : 100, 
+		watts2 : 25, 
 		min: false,
 		max: false,
 		motive: 'hunger',
@@ -27,7 +27,7 @@ const appliance_inits = [
 	{
 		type : 'stove',
 		watts1 : 1250,
-		watts2 : 750,
+		watts2 : 150,
 		min: 10,
 		max: 60,
 		motive: 'hunger',
@@ -35,7 +35,7 @@ const appliance_inits = [
 	{
 		type : 'toaster',
 		watts1 : 1400,
-		watts2 : 700,
+		watts2 : 200,
 		min: 1,
 		max: 5,
 		motive: 'hunger',
@@ -62,14 +62,7 @@ const appliance_inits = [
 		watts2 : 200,
 		min: 30,
 		max: 120,
-		motive: 'cleanliness:dishes'
-	},
-	{
-		type : 'exhaust',
-		watts1 : 260,
-		watts2 : 100,
-		min: false,
-		max: false,
+		motive: 'cleanliness'
 	},
 	{
 		type : 'light',
@@ -105,10 +98,10 @@ const appliance_inits = [
 	{
 		type : 'fan',
 		watts1 : 75,
-		watts2 : 75,
+		watts2 : 5,
 		min: 5,
 		max: 360,
-		motive: 'comfort:temperature'
+		motive: 'comfort'
 	},	
 	{
 		type : 'computer',
@@ -119,57 +112,49 @@ const appliance_inits = [
 		motive: 'boredom'
 	},	
 	{
-		type : 'plug',
-		watts1 : 5,
-		watts2 : 5,
-		min: 10,
-		max: 360,
-		motive: 'other'
-	},
-	{
 		type : 'washingmachine',
 		watts1 : 1900,
 		watts2 : 300,
 		min: 60,
 		max: 120,
-		motive: 'cleanliness:clothes'
+		motive: 'cleanliness'
 	},
 	{
 		type : 'dryer',
 		watts1 : 4800,
-		watts2 : 4800,
+		watts2 : 100,
 		min: 60,
 		max: 120,
-		motive: 'cleanliness:clothes'
+		motive: 'cleanliness'
 	},		
 	{
 		type : 'airconditioner',
 		watts1 : 3500,
-		watts2 : 3450,
-		min: false,
-		max: false,
-		motive: 'comfort:temperature'
+		watts2 : 100,
+		min: 10,
+		max: 1440,
+		motive: 'comfort'
 	},
 	{
 		type : 'furnace',
 		watts1 : 10000,
-		watts2 : 9950,
+		watts2 : 10,
 		min: false,
 		max: false,
-		motive: 'comfort:temperature'
+		motive: 'comfort'
 	},
 	{
 		type : 'hairdryer',
 		watts1 : 1000,
-		watts2 : 1000,
+		watts2 : 5,
 		min: 5,
 		max: 10,
-		motive: 'aesthetics'
+		motive: 'hygiene'
 	},
 	{
 		type : 'bath',
 		watts1 : 3800,
-		watts2 : 1900,
+		watts2 : 0,
 		min: 30,
 		max: 60,
 		motive: 'hygiene'
@@ -177,7 +162,7 @@ const appliance_inits = [
 	{
 		type : 'shower',
 		watts1 : 1000,
-		watts2 : 1000,
+		watts2 : 0,
 		min: 5,
 		max: 15,
 		motive: 'hygiene'
