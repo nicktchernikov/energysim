@@ -38,46 +38,41 @@ app.get('/view', (req, res) => {
     res.json(house);
 });
 
-
 // add a room to the house
 app.post('/add-room', (req, res) => {
-    console.log(req.body);
-    let id = Math.floor(1000 + Math.random() * 9000); //random id
-    let name = req.body.name + "_" + id;
+    name = req.body.name;
     name = name.replace(" ", "_");
     room = { "room_id" : name, "appliances" : [] };
     house.push(room);
+    console.log('Added ' + name);
     res.redirect('/');
-    // output json
 });
 
 // add an appliance to a room
 app.post('/add-appliance', (req, res) => {
     console.log(req.body);
-    let type = req.body.selected_type;
-    let id = Math.floor(1000 + Math.random() * 9000); //random id
-    let type_id = type + "_" + id;
-    //console.log(type_id);
-    let roomName = req.body.room_id;
-    let applianceObject = {appliance_id: type_id};
-    console.log(applianceObject);
-    let found = false;
+    let room_id = req.body.room_id;
+    let appliance_id = req.body.appliance_id;
+    let i = 0;
     house.forEach((room) => {
-        if(room.room_id === roomName) found = true;
+        if(room.room_id === room_id) {
+            console.log('adding ' + appliance_id);
+            house[i].appliances.push({appliance_id: appliance_id});
+        }
+        i++;
     });
-    if(!found) {
-        res.json({msg: "No such room"});
-    } else {
-        let i = 0;
-        house.forEach((room) => {
-            if(room.room_id === roomName) {
-                house[i].appliances.push(applianceObject);
-            }
-            i++;
-        });
-        res.redirect('/');
-    }
+    res.redirect('/');
 });
+
+app.get('/setups', (req, res) => {
+    fs.readdir('./setups', (err, files) => {
+        if(err) {  
+            res.json(); 
+        } else {
+            res.json(files);
+        }
+    });
+});   
 
 app.post('/remove-appliance', (req, res) => {
     let room_id = req.body.room_id;
@@ -99,16 +94,20 @@ app.post('/remove-appliance', (req, res) => {
     res.redirect('/');
 });
 
-app.get('/save', (req, res) => {
-    // add layout info here? 
-    let json = JSON.stringify(house, null, 4);
-    fs.writeFile('./setup_data.json', json, (err) => {
-        if (err) throw err;
-        console.log('Wrote setup data to /setup_data.json!');
-        res.json({'success' : 'true'});
-    });
-});
+// app.get('/save', (req, res) => {
+//     // add layout info here? 
+//     let json = JSON.stringify(house, null, 4);
+//     fs.writeFile('./setup_data.json', json, (err) => {
+//         if (err) throw err;
+//         console.log('Wrote setup data to /setup_data.json!');
+//         res.json({'success' : 'true'});
+//     });
+// });
 
+app.post('/setHouse', (req, res) => {
+    console.log(req.body);
+    res.json(req.body);
+});
 
 app.post('/save', (req, res) => {
     settings = [];
@@ -118,46 +117,46 @@ app.post('/save', (req, res) => {
     data.push({settings});
     data.push({rooms});
     let json = JSON.stringify(data, null, 4);
-    fs.writeFile('./setup_data.json', json, (err) => {
+    fs.writeFile('./setups/'+req.body.setupId+'.json', json, (err) => {
         if (err) throw err;
-        console.log('Wrote setup data!');
-        res.json({'success' : 'true'});
+        console.log('Wrote setup data to /setups/' + req.body.setupId + '.json!');
+        res.json({"saved" : true});
     });
 });
 
-app.post('/typicalHouse', (req, res) => {
-    settings = [];
-    settings.push(req.body);
+// app.post('/typicalHouse', (req, res) => {
+//     settings = [];
+//     settings.push(req.body);
 
-    parsedJSON = require('./typical_house_setup.json');
-    rooms = parsedJSON[0].rooms;
+//     parsedJSON = require('./typical_house_setup.json');
+//     rooms = parsedJSON[0].rooms;
 
-    //console.log(parsedJSON, rooms);
+//     //console.log(parsedJSON, rooms);
 
-    data = [];
-    data.push({settings});
-    data.push({rooms});
-    let json = JSON.stringify(data, null, 4);
-    fs.writeFile('./setup_data.json', json, (err) => {
-        if (err) throw err;
-        console.log('Wrote setup data!');
-        res.json({'success' : 'true'});
-    });
-});
+//     data = [];
+//     data.push({settings});
+//     data.push({rooms});
+//     let json = JSON.stringify(data, null, 4);
+//     fs.writeFile('./setup_data.json', json, (err) => {
+//         if (err) throw err;
+//         console.log('Wrote setup data!');
+//         res.json({'success' : 'true'});
+//     });
+// });
 
-app.get('/checkSetup', (req, res) => {
-    fs.readFile('./setup_data.json', (err, data) => {
-        if(err) { 
-            res.json({'err' : err, 'setupExists' : false});
-        } else {
-            res.json({'setupExists' : true});
-        }
-    });
-});
+// app.get('/checkSetup', (req, res) => {
+//     fs.readFile('./setup_data.json', (err, data) => {
+//         if(err) { 
+//             res.json({'err' : err, 'setupExists' : false});
+//         } else {
+//             res.json({'setupExists' : true});
+//         }
+//     });
+// });
 
 app.post('/checkSetup', (req, res) => {
     chkId = req.body.setupId;
-    console.log(chkId);
+    //console.log(chkId);
     fs.readdir('./setups', (err, files) => {
         match = false;
         files.forEach((file) => {
@@ -165,8 +164,8 @@ app.post('/checkSetup', (req, res) => {
                 match = true;
             }
         });
+        res.json({"setupId" : chkId, "exists" : match});
     });
-    res.json({"chkId" : chkId, "exists" : match});
 });
 
 app.get('/', (req, res) => {
@@ -176,10 +175,10 @@ app.get('/', (req, res) => {
     );
 });
 
-app.get('/results/:results_filename_id/:type', (req, res) => {
+app.get('/results/:results_filename_id/:type?', (req, res) => {
     filenames = fs.readdirSync(path.join(__dirname, "outputs"));
     results_filename = req.params.results_filename_id + ".json";
-    type = req.params.type; 
+    type = req.params.type;
 
     console.log('results_filename: ' + results_filename);
 
@@ -277,14 +276,16 @@ app.get('/results', (req, res) => {
     });
 });
 
-app.get('/generate', (req, res) => {
+app.get('/generate/:setupId', (req, res) => {
+    let arguments = [req.params.setupId];
     // Now we can run a script and invoke a callback when complete, e.g.
-    runScript('./generate-silent.js', function (err) {
+    runScript('./generate-silent.js', arguments, function (err) {
         if (err) throw err;
         // code that executes once generation is done... 
         console.log('Generated!');
         res.json({ success: true });
     });
+    //generateSimulation(setupId);
 });
 
 const applianceInits = require('./applianceInits.js');
@@ -293,6 +294,13 @@ app.get('/appliance-data.js', (req, res) => {
             res.json(applianceInits);
     });
 });
+
+// app.get('/results/:x/:y?', (req, res) => {
+//     x = req.params.x;
+//     y = req.params.y;
+//     if(y) { console.log(y); }
+//     res.json({x, y});
+// });
 
 app.get('/jsonResults(/:id)?', (req, res) => {
     fileId = req.params.id;
@@ -324,6 +332,17 @@ app.get('/jsonResults(/:id)?', (req, res) => {
     });
 });
 
+app.get('/getSetupJSON/:setupId', (req, res) => {
+    setupId = req.params.setupId;
+    fs.readFile('./setups/'+setupId+'.json', 'utf8', (err, data) => {
+        if(err) {
+            res.json({err});
+        } else{
+            res.json(JSON.parse(data));
+        }   
+    });
+});
+
 
 app.listen(PORT, () => {
     console.log('Running server on port 5002.');
@@ -331,30 +350,6 @@ app.listen(PORT, () => {
 
 // Child process script:
 var childProcess = require('child_process');
-const { isRegExp } = require('util');
-
-function runScript(scriptPath, callback) {
-
-    // keep track of whether callback has been invoked to prevent multiple invocations
-    var invoked = false;
-
-    var process = childProcess.fork(scriptPath);
-
-    // listen for errors as they may prevent the exit event from firing
-    process.on('error', function (err) {
-        if (invoked) return;
-        invoked = true;
-        callback(err);
-    });
-
-    // execute the callback once the process has finished running
-    process.on('exit', function (code) {
-        if (invoked) return;
-        invoked = true;
-        var err = code === 0 ? null : new Error('exit code ' + code);
-        callback(err);
-    });
-}
 
 function condense_hourly(rooms) {
     console.log("Condensing hourly.");
@@ -388,4 +383,28 @@ function condense_hourly(rooms) {
     }
     //console.log(rooms[0].appliances[0].data);
     return rooms;
+}
+
+function runScript(scriptPath, child_argv, callback) {
+
+    // keep track of whether callback has been invoked to prevent multiple invocations
+    var invoked = false;
+
+    var process = childProcess.fork(scriptPath, child_argv);
+
+    // listen for errors as they may prevent the exit event from firing
+    process.on('error', function (err) {
+        if (invoked) return;
+        invoked = true;
+        callback(err);
+    });
+
+    // execute the callback once the process has finished running
+    process.on('exit', function (code) {
+        if (invoked) return;
+        invoked = true;
+        var err = code === 0 ? null : new Error('exit code ' + code);
+        callback(err);
+    });
+
 }

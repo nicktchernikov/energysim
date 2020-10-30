@@ -1,0 +1,48 @@
+[
+    {
+        "settings": [
+            {
+                "setupId": "8mTtW",
+                "start": 1604052089,
+                "increment": 60,
+                "days": 7,
+                "watchfulness": 0.5
+            }
+        ]
+    },
+    {
+        "rooms": [
+            {
+                "room_id": "kitchen_4289",
+                "appliances": [
+                    {
+                        "appliance_id": "oven_1083"
+                    },
+                    {
+                        "appliance_id": "oven_9312"
+                    }
+                ]
+            },
+            {
+                "room_id": "kitchen_5339",
+                "appliances": [
+                    {
+                        "appliance_id": "oven_1981"
+                    }
+                ]
+            },
+            {
+                "room_id": "bedroom_2_3477",
+                "appliances": [
+                    {
+                        "appliance_id": "toaster_8777"
+                    }
+                ]
+            },
+            {
+                "room_id": "laundry_room_7563",
+                "appliances": []
+            }
+        ]
+    }
+]

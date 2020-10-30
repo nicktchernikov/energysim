@@ -1,13 +1,19 @@
 const fs = require('fs');
 const path = require('path');
+const { exit } = require('process');
 
 const Agent = require('./Agent-silent.js');
 const Appliance = require('./Appliance-silent.js');
 
 const appliance_inits = require('./applianceInits.js');
 
+if(process.argv) { 
+    setupId = process.argv[2];
+} else {
+    throw "No setupId";
+}
 // Read and format setup data:
-let simulation_json = fs.readFileSync('./setup_data.json'); 
+let simulation_json = fs.readFileSync('./setups/'+setupId+'.json'); 
 let simulation = JSON.parse(simulation_json);
 let settings = simulation[0].settings[0];
 
@@ -458,7 +464,8 @@ function simulationForward() {
 }
 
 function completeSimulation() {
-    let filename = new Date().getTime()+'.json';
+    //let filename = new Date().getTime()+'.json';
+    let filename = setupId+".json"; // from process.argv[2]
     let simulation_completed = [];
     settings.filename = filename;
     //console.log(settings);
@@ -495,7 +502,6 @@ function completeSimulation() {
         }
     });
 
-    //storePercentage();
 }
 
 function condense_hourly(rooms) {

@@ -2,14 +2,137 @@
     {
         "settings": [
             {
-                "start": 1604008524,
+                "start": 1604017591,
                 "increment": 60,
                 "days": 7,
-                "watchfulness": 0.5
+                "watchfulness": 1
             }
         ]
     },
     {
-        "rooms": []
+        "rooms": [
+            {
+                "room_id": "kitchen_9897",
+                "appliances": [
+                    {
+                        "appliance_id": "fridge_5317"
+                    },
+                    {
+                        "appliance_id": "microwave_4182"
+                    },
+                    {
+                        "appliance_id": "oven_1049"
+                    },
+                    {
+                        "appliance_id": "toaster_3483"
+                    },
+                    {
+                        "appliance_id": "stove_2711"
+                    },
+                    {
+                        "appliance_id": "dishwasher_2790"
+                    },
+                    {
+                        "appliance_id": "light_3683"
+                    }
+                ]
+            },
+            {
+                "room_id": "living_room_6876",
+                "appliances": [
+                    {
+                        "appliance_id": "tv_2250"
+                    },
+                    {
+                        "appliance_id": "xbox_3451"
+                    },
+                    {
+                        "appliance_id": "dvd_2949"
+                    },
+                    {
+                        "appliance_id": "fan_6182"
+                    },
+                    {
+                        "appliance_id": "computer_7640"
+                    },
+                    {
+                        "appliance_id": "hairdryer_8444"
+                    },
+                    {
+                        "appliance_id": "light_8585"
+                    }
+                ]
+            },
+            {
+                "room_id": "bathroom_9653",
+                "appliances": [
+                    {
+                        "appliance_id": "bath_3072"
+                    },
+                    {
+                        "appliance_id": "shower_6511"
+                    },
+                    {
+                        "appliance_id": "hairdryer_2079"
+                    },
+                    {
+                        "appliance_id": "light_6353"
+                    }
+                ]
+            },
+            {
+                "room_id": "laundry_room_4786",
+                "appliances": [
+                    {
+                        "appliance_id": "light_3941"
+                    },
+                    {
+                        "appliance_id": "washingmachine_6206"
+                    },
+                    {
+                        "appliance_id": "dryer_4837"
+                    }
+                ]
+            },
+            {
+                "room_id": "bedroom_1_8993",
+                "appliances": [
+                    {
+                        "appliance_id": "light_9379"
+                    },
+                    {
+                        "appliance_id": "computer_2854"
+                    },
+                    {
+                        "appliance_id": "light_5326"
+                    }
+                ]
+            },
+            {
+                "room_id": "bedroom_2_9188",
+                "appliances": [
+                    {
+                        "appliance_id": "tv_9228"
+                    },
+                    {
+                        "appliance_id": "light_3330"
+                    }
+                ]
+            },
+            {
+                "room_id": "bedroom_3_9412",
+                "appliances": [
+                    {
+                        "appliance_id": "light_4062"
+                    },
+                    {
+                        "appliance_id": "fan_5855"
+                    },
+                    {
+                        "appliance_id": "computer_3162"
+                    }
+                ]
+            }
+        ]
     }
 ]

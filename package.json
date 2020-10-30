@@ -18,7 +18,11 @@
     "dev": "nodemon server"
   },
   "nodemonConfig" : {
-    "ignore" : ["/home/nickt/energysim-v2/*.json"]
+    "ignore" : [
+      "./*.json", 
+      "./setups",
+      "./outputs"
+    ]
   },
   "keywords": [],
   "author": "",

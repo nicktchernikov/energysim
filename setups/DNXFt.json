@@ -1,0 +1,16 @@
+[
+    {
+        "settings": [
+            {
+                "setupId": "DNXFt",
+                "start": 1604051761,
+                "increment": 60,
+                "days": 7,
+                "watchfulness": 0.5
+            }
+        ]
+    },
+    {
+        "rooms": []
+    }
+]

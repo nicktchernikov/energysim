@@ -1,0 +1,16 @@
+[
+    {
+        "settings": [
+            {
+                "setupId": "eOfPg",
+                "start": 1604051893,
+                "increment": 60,
+                "days": 7,
+                "watchfulness": 0.5
+            }
+        ]
+    },
+    {
+        "rooms": []
+    }
+]

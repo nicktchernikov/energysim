@@ -2,12 +2,13 @@
   #setupId {
     display: inline-block;
   }
-  #generate {
+  #generateBox {
     display: none;
   }
 </style>
 
 <script>
+
   $(document).ready(() => {
     // don't display generate btn if save hasn't been clicked
 
@@ -19,28 +20,23 @@
 
     $("#setupId").text(setupId);
 
-    function setupIdExists(setupId) {
+    function setupExists(setupId, callback) {
       $.ajax({
         url: '/checkSetup',
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({setupId}),
-        success: function(data) {
-          if(!data.exists) {
-            console.log(data.chkId + " does not exist.");
-            return false;
-          }
-          return true;
-        }
+        success: callback
       });
     }
 
-    if(setupIdExists(setupId)) {
-      $('#generate').css('display', 'block');
-      $('#generateBoxId').text(setupId);
-    } else {
-      $('#generate').css('display', 'none');
-    }
+    setupExists(setupId, (result) => {
+      if(result.exists) {
+        $('#generateBox').css('display', 'block');
+        $('#generateSetupId').text("Generating with Setup ID: " + result.setupId);
+        $("#loadSetupId").text("Load Setup ID: "+setupId);
+      } 
+    });
 
     $.getJSON('./appliance-data.js', (data) => {
       let appliance_list = data;
@@ -52,130 +48,187 @@
       });
     });
 
-      $('.add_room').on('click', function(event) {
-            let room_name = (event.target.innerHTML).toLowerCase();
-            room_name = room_name.trim();
-            room_name = room_name.replace(' ', '_');
-
-            $.ajax({
-                url: '/add-room', 
-                type: 'POST', 
-                contentType: 'application/json', 
-                data: JSON.stringify({name: room_name})
-            })
-            .done((data) => {
-                location.reload();
-            });
-           //console.log(room_name);
-        });
-
-        $('.remove_appliance').on('click', (event) => {
-            let room_id = (event.target.id).split("-")[1];
-            let appliance_id = (event.target.id).split("-")[2];
-            $.ajax({
-                url: '/remove-appliance',
-                type: 'POST', 
-                contentType: 'application/json',
-                data: JSON.stringify({room_id: room_id, appliance_id })
-            })
-            .done((data) => {
-                location.reload();
-            });
-
-        });
-
-        $('.add_appliance').on('click', (event) => {
-            let room_id = (event.target.id).split("-")[1];
-            let dropdown_id = room_id + "_appliances";
-            let selected_type  = $("select[name='"+dropdown_id+"']").val();
-            console.log("adding appliance");
-            $.ajax({
-                url: '/add-appliance',
-                type: 'POST', 
-                contentType: 'application/json',
-                data: JSON.stringify({room_id: room_id, selected_type })
-            })
-            .done((data) => {
-                location.reload();
-            });
-        });
-
-        $("#clear").click( () => {
-            $.get("/empty", () => {
-                console.log('emptying!');
-                location.reload();
-            });
-        });
-
-        //$("#save").click( () => {
-          //  $.get("/save", () => {
-            //    location.reload();
-              //  alert("Setup saved to setup_data.js");
-            //});
-        //});
-
-        $("#save").click( () => {
-            start = Math.floor(Date.now() / 1000);
-            days = parseInt($("#days_input").val());
-            increment = 60;
-            watchfulness = parseFloat($("#watchfulness_input").val());
-            //console.log('saving!');
-            $.ajax({
-                url: '/save',
-                type: 'POST', 
-                contentType: 'application/json',
-                data: JSON.stringify({ setupId, start, increment, days, watchfulness })
-            })
-            .done((data) => {
-                $("#generate").css('display', 'block');
-                alert('House state is saved to setup_data.json!');
-                location.reload();
-            });
-        });
-
-        $("#typicalHouse").click( () => {
-            start = Math.floor(Date.now() / 1000);
-            days = parseInt($("#days_input").val());
-            increment = 60;
-            watchfulness = parseFloat($("#watchfulness_input").val());
+    $('.add_room').on('click', function(event) {
+          let room_name = (event.target.innerHTML).toLowerCase();
+          room_name = room_name.trim();
+          let id = Math.floor(1000 + Math.random() * 9000); //random id
+          room_name = room_name + "_" + id;
           $.ajax({
-            url: '/typicalHouse',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ start, increment, days, watchfulness })
-          }).done((data) => {
-            $("#generate").css('display', 'block');
-            alert('Saved typical house to setup_data.json!');
+              url: '/add-room', 
+              type: 'POST', 
+              contentType: 'application/json', 
+              data: JSON.stringify({name: room_name})
+          })
+          .done((data) => {
             location.reload();
           });
-        });
+      });
 
-        $("#generate").click( () => {
-          let setupExists = false; 
+      $('.remove_appliance').on('click', (event) => {
+          let room_id = (event.target.id).split("-")[1];
+          let appliance_id = (event.target.id).split("-")[2];
           $.ajax({
-            url: '/checkSetup', 
-            type: 'GET'
-          }).done((response) => {
-            setupExists = response.setupExists; // response is an object
-            if(setupExists) {
-              //alert(setupExists);
-              $("#generate_status").text("Generating...");
-              let generated = false;
-              // need a way to check that the shit is generated 
-              // is there a way to make a progress bar
-              $.ajax({
-                url: '/generate', 
-                type: 'GET',
-                beforeSend: function() {
-                  //alert("This is being sent before the actual call is made.");
-                }
-              }).done( (data) => {
-                alert("Finished");
-                $("#generate_status").text("Generated!");
-              });
-            }
+              url: '/remove-appliance',
+              type: 'POST', 
+              contentType: 'application/json',
+              data: JSON.stringify({room_id: room_id, appliance_id })
+          })
+          .done((data) => {
+              location.reload();
           });
+
+      });
+
+      $('.add_appliance').on('click', (event) => {
+          let room_id = (event.target.id).split("-")[1];
+          let dropdown_id = room_id + "_appliances";
+          let selected_type  = $("select[name='"+dropdown_id+"']").val();
+          let id = Math.floor(1000 + Math.random() * 9000); //random id
+          let appliance_id = selected_type + "_" + id;
+
+          console.log("adding appliance");
+
+          $.ajax({
+              url: '/add-appliance',
+              type: 'POST', 
+              contentType: 'application/json',
+              data: JSON.stringify({room_id: room_id, appliance_id })
+          })
+          .done((data) => {
+              location.reload();
+          });
+
+      });
+
+      $("#clear").click( () => {
+          $.get("/empty", () => {
+              console.log('emptying!');
+              location.reload();
+          });
+      });
+
+      //$("#save").click( () => {
+        //  $.get("/save", () => {
+          //    location.reload();
+            //  alert("Setup saved to setup_data.js");
+          //});
+      //});
+
+      $("#save").click( () => {
+          start = Math.floor(Date.now() / 1000);
+          days = parseInt($("#days_input").val());
+          increment = 60;
+          watchfulness = parseFloat($("#watchfulness_input").val());
+          //console.log('saving!');
+          $.ajax({
+              url: '/save',
+              type: 'POST', 
+              contentType: 'application/json',
+              data: JSON.stringify({ setupId, start, increment, days, watchfulness })
+          })
+          .done(() => {
+            $("#generate").css('display', 'block');
+            alert('House setup is saved to '+setupId+'.json!');
+            location.reload();
+          });
+      });
+
+      $('#typicalHouse').click( () => {
+          start = Math.floor(Date.now() / 1000);
+          days = parseInt($('#days_input').val());
+          increment = 60;
+          watchfulness = parseFloat($('#watchfulness_input').val());
+        $.ajax({
+          url: '/typicalHouse',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ start, increment, days, watchfulness })
+        }).done((data) => {
+          $('#generate').css('display', 'block');
+          alert('Saved typical house to setup_data.json!');
+          location.reload();
         });
+      });
+
+    $('#generateButton').click( () => {
+      $('#generateStatus').text('Generating...');
+      $.ajax({
+        url: '/generate/'+setupId, 
+        type: 'GET',
+        beforeSend: function() {
+          //alert("This is being sent before the actual call is made.");
+        }
+      }).done( (data) => {
+        alert('Finished');
+        $('#generateStatus').html('Generated! <a href="./results/'+setupId+'"> View Results </a>');
+      });
+    });
+
+    $('#newId').click(() => {
+      $.get('/empty');
+      setupId = makeid(5);
+      localStorage.setItem('setupId', setupId);
+      location.reload();
+    });
+
+    $('#loadButton').click(() => {
+      getSetupJSON(setupId, function(data) {
+        rooms = data[1].rooms;
+        if(rooms.length == 0) {
+          $("#roomsMessage").text('No rooms!');
+        } else {
+          $.get('/empty', () => {
+            rooms.forEach((room) => {
+              room_id = room.room_id;
+              $.ajax({
+                url: '/add-room',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({name: room_id})
+              });
+              appliances = room.appliances;
+              if(appliances.length > 0) {
+                appliances.forEach((appliance) => {
+                  appliance_id = appliance.appliance_id;
+                  $.ajax({
+                    url: '/add-appliance',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({room_id, appliance_id})
+                  });
+                });
+              }
+            });
+            location.reload();
+          })
+        }
+      })
+    });
+
+    $.getJSON('/setups', (data) => {
+      data.forEach((setupFilename) => {
+        $('#setups').append(
+          '<option value="'+setupFilename+'"> '+setupFilename+' </option>'
+        );
+      });
+    });
+
+    $('#chooseLoad').click( () => {
+      let loadId = $('#setups').val();
+      setupId = loadId.split(".")[0];
+      localStorage.setItem('setupId', setupId);
+      location.reload();
+    });
+    
+
+    function getSetupJSON(setupId, callback) {
+      $.ajax({
+        url: '/getSetupJSON/'+setupId,
+        type: 'GET',
+        success: callback
+      });
+    }
+
   });
 
   function makeid(length) {
@@ -196,37 +249,17 @@
         <h2>Energy Simulation Setup</h2>
         <br />
 
-        <h4 style="display: inline-block;"> Setup Id: </h4>  
+        <h4 style="display: inline-block;"> Editing Setup Id: </h4>  
           <div id="setupId"></div>
         </h4>
 
-        <h4> Days: 
-          <input 
-            class="form-control" 
-            value="7" 
-            id="days_input" 
-            type="number"
-          /> 
-        </h4>
-
-        
-        <h4> Agent watchfulness: 
-          <input 
-            class="form-control" 
-            value="0.5" 
-            id="watchfulness_input" 
-            type="number"
-          /> 
-        </h4>
+        <button id="newId" class="btn btn-primary">Make New Id</button>
 
         <hr />
 
-        <button id="typicalHouse" class="btn btn-primary">
+        {{!-- <button id="typicalHouse" class="btn btn-primary">
             Shortcut: Setup 'Typical' House
-        </button>
-
-        <br /><br />
-
+        </button> --}}
 
         <h4> Add a Room </h4>
             <div id="room_buttons">
@@ -263,39 +296,43 @@
         <br /> <br />
 
         <h4> Rooms </h4>
-            {{#house}}
-                <strong><u> {{room_id}} </u> </strong> <br />
-                {{#appliances}}
-                    <div class='appliance'>{{appliance_id}}</div>
-                    <button 
-                      class="remove_appliance btn btn-primary"
-                      id="from-{{../room_id}}-{{appliance_id}}"
-                      style="font-size: 10pt;"
-                    >
-                      Remove
-                  </button>
+            <div id="roomsMessage"></div>
+
+            <div id="rooms">
+              {{#house}}
+                  <strong><u> {{room_id}} </u> </strong> <br />
+                  {{#appliances}}
+                      <div class='appliance'>{{appliance_id}}</div>
+                      <button 
+                        class="remove_appliance btn btn-primary"
+                        id="from-{{../room_id}}-{{appliance_id}}"
+                        style="font-size: 10pt;"
+                      >
+                        Remove
+                    </button>
+                    <br /><br />
+                  {{/appliances}}
+                  <br />
+                  <div class="row">
+                      <div class="col-sm-2">
+                          <select 
+                            class="appliance-list form-control" 
+                            name="{{this.room_id}}_appliances"
+                          >
+                      </select>
+                      </div>
+                      <div class="col-sm-2">
+                          <button 
+                            class="btn btn-primary add_appliance" 
+                            id="to-{{this.room_id}}" 
+                            class="btn btn-primary">
+                            Add
+                          </button>
+                      </div>
+                  </div>
                   <br /><br />
-                {{/appliances}}
-                <br />
-                <div class="row">
-                    <div class="col-sm-2">
-                        <select 
-                          class="appliance-list form-control" 
-                          name="{{this.room_id}}_appliances"
-                        >
-                    </select>
-                    </div>
-                    <div class="col-sm-2">
-                        <button 
-                          class="btn btn-primary add_appliance" 
-                          id="to-{{this.room_id}}" 
-                          class="btn btn-primary">
-                          Add
-                        </button>
-                    </div>
-                </div>
-                <br /><br />
-            {{/house}}
+              {{/house}}
+            </div>
 
          <div id="rooms_setup" class="row">
             <!-- <div class="col-sm-4">
@@ -309,12 +346,49 @@
         <hr />
 
     <p><button id="clear" class="btn btn-primary"> Clear </button>
-    <button id="save" class="btn btn-primary"> Save </button></p>
+
+    <br /><br />
+
+    <div id="loadSetupId"></div> 
+    <select id="setups"></select>
+    <button id="chooseLoad">Choose</button>
+    <br />
+    <button id="loadButton" class="btn btn-primary">Load</button>
+
+    <br /> <br />
+
+    <h4> Days: 
+      <input 
+        class="form-control" 
+        value="7" 
+        id="days_input" 
+        type="number"
+      /> 
+    </h4>
+
+
+    <h4> Agent watchfulness: 
+      <input 
+        class="form-control" 
+        value="0.5" 
+        id="watchfulness_input" 
+        type="number"
+      /> 
+    </h4>
+
+    <br /> <br />
+
+    <p><button id="save" class="btn btn-primary"> Save </button>
+    
+    <hr> 
+
+
 
     <p id="generateBox">
-      <button id="generate" class="btn btn-primary">Generate</button>
+      <button id="generateButton" class="btn btn-primary">Generate</button>
+      <div id="generateSetupId"></div>
     </p>
-    <div id="generate_status"></div>
+    <div id="generateStatus"></div>
 
     {{!-- <p><button id="generate_data" class="btn btn-primary"> generate and display data </button></p> --}}
 

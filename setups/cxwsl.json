@@ -1,0 +1,37 @@
+[
+    {
+        "settings": [
+            {
+                "setupId": "cxwsl",
+                "start": 1604051686,
+                "increment": 60,
+                "days": 7,
+                "watchfulness": 0.5
+            }
+        ]
+    },
+    {
+        "rooms": [
+            {
+                "room_id": "living_room_8517",
+                "appliances": []
+            },
+            {
+                "room_id": "bedroom_2_3076",
+                "appliances": [
+                    {
+                        "appliance_id": "dvd_4942"
+                    }
+                ]
+            },
+            {
+                "room_id": "bedroom_2_8050",
+                "appliances": [
+                    {
+                        "appliance_id": "oven_1737"
+                    }
+                ]
+            }
+        ]
+    }
+]
