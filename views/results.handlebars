@@ -18,38 +18,36 @@
         let settings = house[0];
         let filename = settings.filename;
 
-        
-
         let rooms = house[1];
 
         // I can add layout info here too, which seems prettier to do
         if(settings) {
             $("#settings").append(
-                "<b> Results info: </b> <br /> Simulation timestep length: " + settings.increment + " seconds <br /> Filename: "+filename+"<br /> Initial agent watchfulness: "+settings.watchfulness+"<br />"
+                "<b> Output file info:  </b> <br /> Simulation timestep length: " + settings.increment + " seconds <br /> Filename: "+filename+"<br /> Initial agent watchfulness: "+settings.watchfulness+"<br />"
             );
         }
 
-         for(i = 0; i < filenames.length; i++) {
-            $("#mySelect").append("<option value='"+filenames[i]+"'>" + filenames[i] + "</option>");
+        for(i = 0; i < filenames.length; i++) {
+            $("#outputs").append("<option value='"+filenames[i]+"'>" + filenames[i] + "</option>");
         }
 
-        {{!-- $("#plots_container").append(
+        {{!-- $("#plotsContainer").append(
             "<h2> total for the entire house </h2>"
         ); --}}
 
         if(rooms) {
             for(i = 0; i < rooms.length; i++) {  
-                $("#plots_container").append(
+                $("#plotsContainer").append(
                     "<h3>" + rooms[i].room_id + "</h3>"
                 );  
                 let appliances = rooms[i].appliances;
                 for(j = 0; j < appliances.length; j++) {
-                    $("#plots_container").append(
+                    $("#plotsContainer").append(
                         "<p> " + rooms[i].room_id + " :: " + appliances[j].appliance_id + " </p><div class='plots' id='plot_"+i+"_"+j+"'></div>"
                     );           
                 }
                     
-                $("#plots_container").append(
+                $("#plotsContainer").append(
                     "<p><b> total for " + rooms[i].room_id + "</b></p> <div class='plots' id='plot_"+i+"_total'></div>"
                 );
             }
@@ -71,7 +69,7 @@
         }
 
         $("#displayButton").click( function() {
-            selected_filename = $("#mySelect").val();
+            selected_filename = $("#outputs").val();
             selected_id = selected_filename.split(".")[0];
             window.location.replace('/results/'+selected_id+"/hourly");
         }) 
@@ -84,16 +82,24 @@
 
     <h1> Energy Simulation Results </h1>
 
-    <br />
-    <h4> Data Files: </h4>
-    <select size="10" id="mySelect" style="width:400px;">
+    <hr> 
+
+    <a href="/"> Back to Setup </a>
+
+    <hr> 
+
+    <h4> Output Files:  </h4>
+    <select size="10" id="outputs" style="width:400px;">
     </select> <br />
     <input type="button" value="Display Selected" id="displayButton">
 
     <br /><br />
 
     <div id="settings"></div>
-    <div id="plots_container"></div>
+
+    <hr> 
+
+    <div id="plotsContainer"></div>
 
 </div>
 

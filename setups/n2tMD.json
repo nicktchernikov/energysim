@@ -2,21 +2,21 @@
     {
         "settings": [
             {
-                "setupId": "8mTtW",
-                "start": 1604143484,
+                "setupId": "n2tMD",
+                "start": 1604142621,
                 "increment": 60,
-                "days": 1,
-                "watchfulness": 0.5
+                "days": 5,
+                "watchfulness": 0.3
             }
         ]
     },
     {
         "rooms": [
             {
-                "room_id": "living_room_5636",
+                "room_id": "kitchen_7036",
                 "appliances": [
                     {
-                        "appliance_id": "microwave_6142"
+                        "appliance_id": "fridge_9440"
                     }
                 ]
             }

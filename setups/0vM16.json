@@ -3,9 +3,9 @@
         "settings": [
             {
                 "setupId": "0vM16",
-                "start": 1604052152,
+                "start": 1604143127,
                 "increment": 60,
-                "days": 7,
+                "days": 6,
                 "watchfulness": 0.5
             }
         ]
@@ -13,30 +13,15 @@
     {
         "rooms": [
             {
-                "room_id": "kitchen_4289",
+                "room_id": "living_room_4126",
                 "appliances": [
                     {
-                        "appliance_id": "oven_1083"
-                    },
-                    {
-                        "appliance_id": "oven_9312"
+                        "appliance_id": "fridge_4895"
                     }
                 ]
             },
             {
-                "room_id": "kitchen_5339",
-                "appliances": [
-                    {
-                        "appliance_id": "oven_1981"
-                    }
-                ]
-            },
-            {
-                "room_id": "bedroom_2_3477",
-                "appliances": []
-            },
-            {
-                "room_id": "laundry_room_7563",
+                "room_id": "bedroom_3_3457",
                 "appliances": []
             }
         ]

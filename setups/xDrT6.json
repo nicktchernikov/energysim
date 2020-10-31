@@ -2,11 +2,11 @@
     {
         "settings": [
             {
-                "setupId": "cxwsl",
-                "start": 1604137511,
+                "setupId": "xDrT6",
+                "start": 1604138506,
                 "increment": 60,
-                "days": 8,
-                "watchfulness": 0.8
+                "days": 7,
+                "watchfulness": 0.9
             }
         ]
     },

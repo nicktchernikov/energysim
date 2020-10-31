@@ -3,14 +3,23 @@
         "settings": [
             {
                 "setupId": "DNXFt",
-                "start": 1604051761,
+                "start": 1604139954,
                 "increment": 60,
                 "days": 7,
-                "watchfulness": 0.5
+                "watchfulness": 0.7
             }
         ]
     },
     {
-        "rooms": []
+        "rooms": [
+            {
+                "room_id": "kitchen_3580",
+                "appliances": []
+            },
+            {
+                "room_id": "living_room_2996",
+                "appliances": []
+            }
+        ]
     }
 ]

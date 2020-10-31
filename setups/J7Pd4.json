@@ -3,9 +3,9 @@
         "settings": [
             {
                 "setupId": "J7Pd4",
-                "start": 1604052559,
+                "start": 1604140039,
                 "increment": 60,
-                "days": 1,
+                "days": 7,
                 "watchfulness": 0.5
             }
         ]
@@ -13,18 +13,8 @@
     {
         "rooms": [
             {
-                "room_id": "living_room_6901",
-                "appliances": [
-                    {
-                        "appliance_id": "oven_5650"
-                    },
-                    {
-                        "appliance_id": "kettle_8186"
-                    },
-                    {
-                        "appliance_id": "toaster_6506"
-                    }
-                ]
+                "room_id": "living_room_7505",
+                "appliances": []
             }
         ]
     }
