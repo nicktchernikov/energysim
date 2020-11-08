@@ -2,6 +2,9 @@
   #setupId {
     display: inline-block;
   }
+  #loadSetupIdError{
+    color: black;
+  }
   #generateBox {
     display: none;
   }
@@ -9,12 +12,6 @@
     display: none;
   }
   #save {
-      {
-        {
-         !-- float: right;
-        --
-      }
-    }
   }
   #newId {
     font-size: 8pt;
@@ -25,11 +22,10 @@
 </style>
 
 <script>
-
   $(document).ready(() => {
 
-     {{#each _settings}}
-    let {{@key}} = {{this}};
+    {{#each sessionSettings}}
+      let {{@key}} = {{this}};
     {{/each}} 
 
     $('#daysInput').val(days);
@@ -134,14 +130,16 @@
     $("#save").click(() => {
       start = Math.floor(Date.now() / 1000);
       days = parseInt($("#daysInput").val());
-      increment = 60;
       watchfulness = parseFloat($("#watchfulnessInput").val());
+      effect = false;
+      increment = 60;
+
       //console.log('saving!');
       $.ajax({
         url: '/save',
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({ setupId, start, increment, days, watchfulness })
+        data: JSON.stringify({ setupId, start, increment, days, watchfulness, effect })
       })
         .done((data) => {
           if(data.error == 'no appliances') {
@@ -153,24 +151,6 @@
             location.reload();
           }
         });
-    });
-
-    $('#typicalHouse').click(() => {
-      start = Math.floor(Date.now() / 1000);
-      days = parseInt($('#daysInput').val());
-      increment = 60;
-      watchfulness = parseFloat($('#watchfulnessInput').val());
-      $.ajax({
-        url: '/typicalHouse',
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ setupId, start, increment, days, watchfulness })
-      }).done((data) => {
-        $('#generate').show();
-        $("#loading").hide();
-        alert('Saved typical house to ' + setupId + '!');
-        location.reload();
-      });
     });
 
     $('#daysInput').change((event) => {
@@ -185,17 +165,15 @@
 
     $('#generateButton').click(() => {
       $('#generateStatus').text('Generating...');
-      $('#loading').show();
+      ///$('#loading').show();
       $.ajax({
         url: '/generate/' + setupId,
-        type: 'GET',
-        beforeSend: function () {
-          //alert("This is being sent before the actual call is made.");
-        }
+        type: 'GET'
       }).done((data) => {
-        alert('Finished');
-        $("#loading").hide();
-        $('#generateStatus').html('Generated! <a href="./results/' + setupId + '"> View Results </a>');
+        //alert('Finished');
+        //$("#loading").hide();
+        //$('#generateStatus').html('Generated! <a href="./results/' + setupId + '"> View Results </a>');
+        $('#generateStatus').html('Result will be available in Results section once complete.');
       });
     });
 
@@ -213,8 +191,8 @@
         newWatchfulness = settings.watchfulness;
         $.post('/setDays', {newDays});
         $.post('/setWatchfulness', {newWatchfulness});
-
         rooms = data[1].rooms;
+        console.log(rooms);
         if (rooms.length == 0) {
           $("#roomsMessage").text('No rooms!');
         } else {
@@ -236,11 +214,12 @@
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({ room_id, appliance_id })
+                  }).done(() => {
+                    location.reload();
                   });
                 });
               }
             });
-            location.reload();
           })
         }
       })
@@ -258,6 +237,13 @@
       let loadId = $('#setups').val();
       setupId = loadId.split(".")[0];
       localStorage.setItem('setupId', setupId);
+      location.reload();
+    });
+
+    $('#setSetupIdCustom').click( () => {
+      let setupIdCustom = $('#setupIdCustom').val();
+      localStorage.setItem('setupId', setupIdCustom);
+      setupId = setupIdCustom;
       location.reload();
     });
 
@@ -287,27 +273,25 @@
     <div class="well">
       <h2>Energy Simulation Setup</h2>
 
+      <a href="./results">Go to Results</a>
+
       <hr>
 
       <h4 style="display: inline-block;"> Setup Id: </h4>
       <div id="setupId" style="padding: 2px; border: 1px solid black;"></div>
       </h4> &nbsp; <b>OR</b> &nbsp;
       <button id="newId" class="btn btn-primary">New Setup</button>
-
+      </h4> &nbsp; <b>OR</b> &nbsp; set you own Setup Id:
+      <input type="text" id="setupIdCustom" />
+      <button id="setSetupIdCustom" class="btn btn-primary">Set</button>
       <hr>
 
       <h3>Load Existing Setup</h3>
-      <div id="loadSetupId">No Filename chosen</div>
+      <div id="loadSetupId"><span id="loadSetupIdError">No Filename chosen</span></div>
       <select id="setups"></select>
       <button id="chooseLoad">Set Filename</button>
       <br />
       <button id="loadButton" class="btn btn-primary" style="margin-top: 5px">Load Setup File</button>
-
-      <hr />
-
-      <button id="typicalHouse" class="btn btn-primary">
-        Shortcut: Setup a 'Typical' House
-      </button>
 
       <hr>
 
@@ -351,10 +335,10 @@
       <div id="roomsMessage"></div>
 
       <div id="rooms">
-        {{#house}}
+        {{#sessionHouse}}
         <hr>
-        <strong><h4>{{room_id}}</h4> </strong>
-        <button class="remove_room btn btn-warning" id="{{room_id}}"> Remove Room </button> 
+        <strong><h4>{{room_id}}</h4></strong>
+        <button class="remove_room btn btn-warning" id="{{room_id}}" style="font-size: 8pt;"> Remove Room </button> 
         <br /><br />
         {{#appliances}}
         <button class="remove_appliance btn btn-primary" id="from-{{../room_id}}-{{appliance_id}}"
@@ -376,29 +360,18 @@
             </button>
           </div>
         </div>
-      
-        {{/house}}
-      </div>
-
-      <div id="rooms_setup" class="row">
-        <!-- <div class="col-sm-4">
-                <div class="well">
-                  <p> info about room </p>
-                  <button class='btn btn-warning'> Add Appliances </button>
-                  </div>
-              </div> -->
+        {{/sessionHouse}}
       </div>
 
       <hr />
 
       <p><button id="clear" class="btn btn-primary"> Clear Setup </button>
 
-        <br /><br />
+      <br /><br />
 
       <h4> Days:
         <input class="form-control" value="" id="daysInput" type="number" />
       </h4>
-
 
       <h4> Agent Watchfulness:
         <input class="form-control" min="0.0" max="1.0" step="0.1" value="0.5" id="watchfulnessInput" type="number" />
@@ -417,11 +390,9 @@
       <div id="generateStatus"></div>
       <div id="loading"><img src='loading-circle.gif'></div>
 
-      {{!-- <p><button id="generate_data" class="btn btn-primary"> generate and display data </button></p> --}}
-
     </div>
 
-    <div class="row">
+    {{!-- <div class="row">
       <div class="col-sm-3">
         <div class="well">
           <h4>Thing</h4>
@@ -460,11 +431,10 @@
         </div>
       </div>
     </div>
-  </div>
+  </div> --}}
 
 
 </div>
-
 
 <!-- Button trigger modal -->
 <!--<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">

@@ -15,13 +15,13 @@
     "nodemon": "^2.0.3"
   },
   "scripts": {
-    "dev": "nodemon server"
+    "dev": "nodemon server -e js,json,handlebars",
+    "dev2": "nodemon server.js -e js,json,handlebars"
   },
   "nodemonConfig" : {
     "ignore" : [
-      "./*.json", 
-      "./setups",
-      "./outputs"
+      "./setups/",
+      "./outputs/"
     ]
   },
   "keywords": [],

@@ -59,6 +59,7 @@ let watchfulness = 0.0; // determines how often the agent turns devices fully of
 agent = new Agent(watchfulness);
 
 // Variables for running simulation:
+// ---------------------------------
 
 // -- Amount of days to simulate:
 const days = _Days;
@@ -86,7 +87,7 @@ let percentage_completed = 0;
 
 weekdays = [1, 2, 3, 4];
 weekends = [0, 6];
-// (Friday day of week is 5)
+// (For friday, the day of the week is 5)
 
 simulationForward();
 
@@ -134,8 +135,6 @@ function simulationForward() {
         // match date 
         // if date's temp > x, turn on AC
         // if date's temp < x, turn on Heater
-
-
 
 // -- Start of Day and Time-Based Triggers
 
@@ -201,9 +200,10 @@ function simulationForward() {
                 }
             }
         }
- // -- End of Days/Time-based Triggering
+// 
+// -- /End of Days/Time-based Triggering
 
-        //console.log('TIMESTEP #: ' + t);
+//console.log('TIMESTEP #: ' + t);
 
 // Each appliance object has a timeleft value
 // The below code goes through each appliance and ticks down the time every timestep
@@ -220,7 +220,6 @@ function simulationForward() {
         }
 
         if(agent.home && agent.awake) {
-
             if(agent.cooking) { 
                 //console.log('Agent is cooking.'); 
             } 
@@ -233,7 +232,7 @@ function simulationForward() {
             cleanliness_appliances = applianceObjects.filter( (applianceObject) => { return applianceObject.motive == 'cleanliness' } );
             hygiene_appliances = applianceObjects.filter( (applianceObject) => { return applianceObject.motive == 'hygiene' } );
 
-           // console.log(comfort_appliances, cleanliness_appliances, hygiene_appliances);
+            // console.log(comfort_appliances, cleanliness_appliances, hygiene_appliances);
 
             // Handle lights randomly
             if(Math.random() > 0.990) {
@@ -453,8 +452,7 @@ function completeSimulation() {
     settings.filename = filename;
     console.log(settings);
     simulation_completed.push(settings);
-    rooms = condense_hourly(rooms);
-
+    rooms = dataMinutesToHours(rooms);
     rooms.forEach( (room) => {
         room.total_data = [];
         room.total_data.push({y: []});
@@ -471,11 +469,8 @@ function completeSimulation() {
             room.total_data[0].y.push(i_total);
         }
     });
-
     console.log(rooms);
-
     simulation_completed.push(rooms);
-
     let simulation_stringified = JSON.stringify(simulation_completed);
     fs.writeFile(path.join('outputs', filename), simulation_stringified, 'utf8', (err) => {
         if(err) { 
@@ -486,8 +481,8 @@ function completeSimulation() {
     });
 }
 
-function condense_hourly(rooms) {
-    console.log("Condensing hourly.");
+function dataMinutesToHours(rooms) {
+    console.log("Condensing minutes to hours in data.");
     for(i = 0; i < rooms.length; i++) {    
         let appliances = rooms[i].appliances;
         for(j = 0; j < appliances.length; j++) {

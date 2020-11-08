@@ -54,7 +54,7 @@
 
             for(i = 0; i < rooms.length; i++) {    
                 let appliances = rooms[i].appliances;
-                let total_data = rooms[i].total_data;
+                let total_data = rooms[i].totalData;
                 let total_layout = total_data.layout;
                 for(j = 0; j < appliances.length; j++) {
                     let appliance_data = appliances[j].data;
@@ -73,6 +73,9 @@
             selected_id = selected_filename.split(".")[0];
             window.location.replace('/results/'+selected_id+"/hourly");
         }) 
+
+         $("#totalLink").attr("href", "/results/" + filename.split(".")[0] + "/total");
+        $("#hourlyLink").attr("href", "/results/" + filename.split(".")[0] + "/hourly");
     });
 
 </script>
@@ -96,6 +99,9 @@
     <br /><br />
 
     <div id="settings"></div>
+
+    <a id="hourlyLink" href=""> View Hourly Results </a> | 
+    <a id="totalLink" href=""> View Total Results </a>
 
     <hr> 
 

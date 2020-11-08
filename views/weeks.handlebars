@@ -1,0 +1,148 @@
+{{!-- incude Plotly via CDN  --}}
+<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+
+<style type="text/css">
+    .plots {
+        width: 1000px;
+        display: inline-block;
+    }
+    .chunks a {
+        cursor: pointer;
+    }
+</style>
+
+<script type="text/javascript">
+    $(document).ready( function() {
+        let house = {{{json data}}};
+        
+        let settings = house[0];
+        let rooms = house[1];
+
+        let filename = settings.filename;
+
+        let roomNum = 0; 
+        $.each(rooms, (key, room) => {
+            //let plotNum = 0;
+            $.each(room.appliances, (key, appliance) => {
+                // For each appliance in every room...
+            });
+            $.each(room.totalData, (key, total) => {
+                lastX = 0;
+                for(c = 0; c < total.y.length; c++) {
+                    let plotId = "room" + roomNum + ":chunk" + c;
+                    $("#plotsContainer").append(
+                        "<div class='chunks' id='" + plotId + "'></div>"
+                    );
+                    yAxis = total.y[c];
+                    xAxis = range(yAxis.length, lastX+1);
+                    lastX += yAxis.length;
+                    title = room.room_id + ", Week " + (c+1);
+                    layout = { title: title, xaxis : {title: 'hour'}, yaxis: {title: 'watts used'} };
+                    Plotly.newPlot(plotId, [{y : yAxis, x: xAxis}], layout);
+                }
+            });
+            roomNum++;
+        });
+
+        $(".chunks").append(
+            "<br /> <a id='previous'>Previous</a> | <a id='next'>Next</a>"
+        );
+        
+        $(".chunks a[id='next']").click((event) => {
+            parentNode = event.target.parentNode;
+            hidePlotId = parentNode.id;
+            console.log("hide: " + hidePlotId);
+            chunkNum = parseInt(hidePlotId.split("chunk")[1]);
+            nextChunkNum = chunkNum + 1;
+            showPlotId = hidePlotId.split("chunk")[0] + "chunk" + nextChunkNum;
+            console.log("show: " + showPlotId);
+
+            hideNode = $(parentNode);
+            showNode = $("div[id='"+showPlotId+"']");
+
+            if(hideNode.length && showNode.length) {
+                hideNode.hide();
+                showNode.show();
+            } 
+        });
+
+        $(".chunks a[id='previous']").click((event) => {
+            parentNode = event.target.parentNode;
+            hidePlotId = parentNode.id;
+            console.log("hide: " + hidePlotId);
+            chunkNum = parseInt(hidePlotId.split("chunk")[1]);
+            nextChunkNum = chunkNum - 1;
+            showPlotId = hidePlotId.split("chunk")[0] + "chunk" + nextChunkNum;
+            console.log("show: " + showPlotId);
+            
+            hideNode = $(parentNode);
+            showNode = $("div[id='"+showPlotId+"']");
+
+            if(hideNode.length && showNode.length) {
+                hideNode.hide();
+                showNode.show();
+            }
+        });
+
+        $(".chunks").hide();
+
+        $(".chunks").each((key, chunk) => {
+            if(parseInt((chunk.id).split("chunk")[1]) == 0) {
+                $(chunk).show();
+            }
+        });
+    
+        function range(size, startAt = 0) {
+            return [...Array(size).keys()].map(i => i + startAt);
+        }
+
+        {{!-- if(rooms) {
+            for(i = 0; i < rooms.length; i++) {  
+                $("#plotsContainer").append(
+                    "<h3>" + rooms[i].room_id + "</h3>"
+                );
+                let appliances = rooms[i].appliances;
+                for(j = 0; j < appliances.length; j++) {
+                    $("#plotsContainer").append(
+                        "<p> " + rooms[i].room_id + " :: " + appliances[j].appliance_id + " </p><div class='plots' id='plot_"+i+"_"+j+"'></div>"
+                    );           
+                }
+                $("#plotsContainer").append(
+                    "<p><b> total for " + rooms[i].room_id + "</b></p> <div class='plots' id='plot_"+i+"_total'></div>"
+                );
+            }
+
+            for(i = 0; i < rooms.length; i++) {    
+                let appliances = rooms[i].appliances;
+                let totalData = rooms[i].totalData;
+                let total_layout = totalData.layout;
+                for(j = 0; j < appliances.length; j++) {
+                    let appliance_data = appliances[j].data;
+                    for(m = 0; m < appliance_data.length; m++) {
+                        Plotly.newPlot(plot_id, appliance_data, appliance_layout);
+                    }
+                    let appliance_layout = appliances[j].layout;
+                    let plot_id = "plot_" + i + "_" + j;
+                }
+                total_plot_id = "plot_" + i + "_total";
+                Plotly.newPlot(total_plot_id, totalData, total_layout);
+            }
+        } --}}
+
+        {{!-- $("#totalLink").attr("href", "/results/" + filename.split(".")[0] + "/total"); --}}
+        {{!-- $("#hourlyLink").attr("href", "/results/" + filename.split(".")[0] + "/hourly"); --}}
+    });
+
+</script>
+
+
+<div class="container-fluid">
+
+    <h1> Energy Simulation Results </h1>
+    
+    <div id="plotsContainer"></div>
+
+</div>
+
+
+

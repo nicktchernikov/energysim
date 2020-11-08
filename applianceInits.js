@@ -1,4 +1,4 @@
-const appliance_inits = [
+const applianceInits = [
 	{
 		type : 'fridge',
 		watts1 : 200,
@@ -12,7 +12,7 @@ const appliance_inits = [
 		type : 'microwave',
 		watts1 : 1000,
 		watts2 : 100,
-		min: 1,
+		min: 5,
 		max: 5,
 		motive: 'hunger',
 	},
@@ -70,6 +70,7 @@ const appliance_inits = [
 		watts2 : 5,
 		min: 1,
 		max: 1440,
+		motive: 'light'
 	},
 	{
 		type : 'tv',
@@ -136,37 +137,13 @@ const appliance_inits = [
 		motive: 'comfort'
 	},
 	{
-		type : 'furnace',
-		watts1 : 10000,
-		watts2 : 10,
-		min: false,
-		max: false,
-		motive: 'comfort'
-	},
-	{
 		type : 'hairdryer',
 		watts1 : 1000,
 		watts2 : 5,
 		min: 5,
 		max: 10,
 		motive: 'hygiene'
-	},
-	{
-		type : 'bath',
-		watts1 : 3800,
-		watts2 : 0,
-		min: 30,
-		max: 60,
-		motive: 'hygiene'
-	},
-	{
-		type : 'shower',
-		watts1 : 1000,
-		watts2 : 0,
-		min: 5,
-		max: 15,
-		motive: 'hygiene'
-	},						
+	},					
 ];
 
-module.exports = appliance_inits;
+module.exports = applianceInits;

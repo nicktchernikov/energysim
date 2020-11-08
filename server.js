@@ -4,14 +4,7 @@ const fs = require("fs");
 const express = require("express");
 var exphbs = require("express-handlebars");
 const app = express();
-
-var router = express.Router();
-
-const _settings = {
-  days: 7,
-  watchfulness: 0.5,
-};
-const house = [];
+app.use(express.static("views/images"));
 
 // Handelebars
 app.engine("handlebars", exphbs());
@@ -23,11 +16,33 @@ app.use(express.urlencoded({ extended: false }));
 
 const PORT = process.env.PORT || 5002;
 
+app.listen(PORT, () => {
+  console.log("Running server on port 5002.");
+});
+
+const sessionSettings = {
+  days: 7,
+  watchfulness: 0.5,
+  effect: false
+};
+const sessionHouse = [];
+
+// Load appliance data:
+const applianceInits = require("./applianceInits.js");
+app.get("/appliance-data.js", (req, res) => {
+  fs.readFile("./applianceInits.js", (err, data) => {
+    res.json(applianceInits);
+  });
+});
+
 app.get("/", (req, res) => {
   //res.json({ msg: 'msg' });
-  //res.json({house, settings});
-  //console.log(_settings);
-  res.render("index", { house: house, _settings: _settings });
+  //res.json({sessionHouse, settings});
+  //console.log(sessionSettings);
+  res.render("index", {
+    sessionHouse: sessionHouse,
+    sessionSettings: sessionSettings,
+  });
 });
 
 app.get("/*.json", (req, res) => {
@@ -39,21 +54,21 @@ app.get("/*.json", (req, res) => {
 
 // empty array
 app.get("/empty", (req, res) => {
-  house.splice(0, house.length);
-  res.json(house);
+  sessionHouse.splice(0, sessionHouse.length);
+  res.json(sessionHouse);
 });
 
-// view house array
+// view sessionHouse array
 app.get("/view", (req, res) => {
-  res.json(house);
+  res.json(sessionHouse);
 });
 
-// add a room to the house
+// add a room to the sessionHouse
 app.post("/add-room", (req, res) => {
   name = req.body.name;
   name = name.replace(" ", "_");
   room = { room_id: name, appliances: [] };
-  house.push(room);
+  sessionHouse.push(room);
   //console.log('Added ' + name);
   res.redirect("/");
 });
@@ -63,11 +78,12 @@ app.post("/add-appliance", (req, res) => {
   //console.log(req.body);
   let room_id = req.body.room_id;
   let appliance_id = req.body.appliance_id;
+  console.log(room_id, appliance_id);
   let i = 0;
-  house.forEach((room) => {
-    if (room.room_id === room_id) {
+  sessionHouse.forEach((room) => {
+    if (room.room_id == room_id) {
       //console.log('adding ' + appliance_id);
-      house[i].appliances.push({ appliance_id: appliance_id });
+      sessionHouse[i].appliances.push({ appliance_id: appliance_id });
     }
     i++;
   });
@@ -84,17 +100,27 @@ app.get("/setups", (req, res) => {
   });
 });
 
+app.get("/outputs", (req, res) => {
+  fs.readdir("./outputs", (err, files) => {
+    if (err) {
+      res.json(err);
+    } else {
+      res.json(files);
+    }
+  });
+});
+
 app.post("/remove-appliance", (req, res) => {
   let room_id = req.body.room_id;
   let appliance_id = req.body.appliance_id;
   //console.log(room_id, appliance_id);
   let i = 0;
-  house.forEach((room) => {
+  sessionHouse.forEach((room) => {
     if (room.room_id === room_id) {
       let j = 0;
       room.appliances.forEach((appliance) => {
         if (appliance.appliance_id == appliance_id) {
-          house[i].appliances.splice(j, 1);
+          sessionHouse[i].appliances.splice(j, 1);
         }
         j++;
       });
@@ -104,29 +130,17 @@ app.post("/remove-appliance", (req, res) => {
   res.redirect("/");
 });
 
-app.post('/remove-room', (req, res) => {
-    roomId = req.body.room_id;
-    for(i = 0; i < house.length; i++) {
-        if(house[i].room_id == roomId) {
-            house.splice(i, 1);
-        }
+app.post("/remove-room", (req, res) => {
+  roomId = req.body.room_id;
+  for (i = 0; i < sessionHouse.length; i++) {
+    if (sessionHouse[i].room_id == roomId) {
+      sessionHouse.splice(i, 1);
     }
-    res.status(200).end();
+  }
+  res.status(200).end();
 });
 
-// app.get('/save', (req, res) => {
-//     // add layout info here?
-//     let json = JSON.stringify(house, null, 4);
-//     fs.writeFile('./setup_data.json', json, (err) => {
-//         if (err) throw err;
-//         console.log('Wrote setup data to /setup_data.json!');
-//         res.json({'success' : 'true'});
-//     });
-// });
-
-app.use(express.static("views/images"));
-
-app.post("/setHouse", (req, res) => {
+app.post("/setsessionHouse", (req, res) => {
   //console.log(req.body);
   res.json(req.body);
 });
@@ -134,18 +148,18 @@ app.post("/setHouse", (req, res) => {
 app.post("/save", (req, res) => {
   settings = [];
   settings.push(req.body);
-  rooms = house;
+  rooms = sessionHouse;
   noAppliances = true;
   rooms.forEach((room) => {
-      if(room.appliances.length > 0) {
-        noAppliances = false;
-      }
+    if (room.appliances.length > 0) {
+      noAppliances = false;
+    }
   });
   //console.log(noAppliances);
-  if(noAppliances == true) {   
-    res.json({'error' : 'no appliances'});
+  if (noAppliances == true) {
+    res.json({ error: "no appliances" });
     return;
-  }     
+  }
   data = [];
   data.push({ settings });
   data.push({ rooms });
@@ -157,43 +171,13 @@ app.post("/save", (req, res) => {
   });
 });
 
-// app.post('/typicalHouse', (req, res) => {
-//     settings = [];
-//     settings.push(req.body);
-
-//     parsedJSON = require('./typical_house_setup.json');
-//     rooms = parsedJSON[0].rooms;
-
-//     //console.log(parsedJSON, rooms);
-
-//     data = [];
-//     data.push({settings});
-//     data.push({rooms});
-//     let json = JSON.stringify(data, null, 4);
-//     fs.writeFile('./setup_data.json', json, (err) => {
-//         if (err) throw err;
-//         console.log('Wrote setup data!');
-//         res.json({'success' : 'true'});
-//     });
-// });
-
-// app.get('/checkSetup', (req, res) => {
-//     fs.readFile('./setup_data.json', (err, data) => {
-//         if(err) {
-//             res.json({'err' : err, 'setupExists' : false});
-//         } else {
-//             res.json({'setupExists' : true});
-//         }
-//     });
-// });
-
 app.post("/setDays", (req, res) => {
-  _settings.days = req.body.newDays;
+  sessionSettings.days = req.body.newDays;
   res.status(200).end();
 });
 
 app.post("/setWatchfulness", (req, res) => {
-  _settings.watchfulness = parseFloat(req.body.newWatchfulness);
+  sessionSettings.watchfulness = parseFloat(req.body.newWatchfulness);
   res.status(200).end();
 });
 
@@ -254,11 +238,11 @@ app.get("/results/:results_filename_id/:type?", (req, res) => {
             });
             newY = [];
             sumY = 0;
-            for (i = 0; i < room.total_data[0].y.length; i++) {
-              sumY += room.total_data[0].y[i];
+            for (i = 0; i < room.totalData[0].y.length; i++) {
+              sumY += room.totalData[0].y[i];
               newY.push(sumY);
             }
-            room.total_data[0].y = newY;
+            room.totalData[0].y = newY;
           });
         }
 
@@ -283,30 +267,15 @@ app.get("/results/:results_filename_id/:type?", (req, res) => {
 
 // without params
 app.get("/results", (req, res) => {
-  // JSON data set from /generate
-
-  //console.log(req['params']);
-
   filenames = fs.readdirSync(path.join(__dirname, "outputs"));
-  filename = filenames[0];
+  filename = filenames[0]; // Choose first filename in list
 
   fs.readFile(path.join(__dirname, "outputs", filename), (err, data) => {
     //fs.readFile('./output_data.json', (err, data) => {
     if (err) throw err;
     const dataset = JSON.parse(data);
-
-    let settings = dataset[0];
-    let rooms = dataset[1];
-
-    // condendsing data:
-    //rooms = condense_hourly(rooms);
-    dataset.push(settings);
-    dataset.push(rooms);
-
     let foldername = path.join(__dirname, "outputs");
     var filenames = fs.readdirSync(foldername);
-    //console.log(condensed_dataset);
-
     res.render("results", {
       dataset,
       filenames,
@@ -320,30 +289,22 @@ app.get("/results", (req, res) => {
 });
 
 app.get("/generate/:setupId", (req, res) => {
-  let arguments = [req.params.setupId];
+  let setupId = req.params.setupId;
+  if(!setupId) throw "No setupId provided.";
+
   // Now we can run a script and invoke a callback when complete, e.g.
-  runScript("./generate-silent.js", arguments, function (err) {
+  runScript("./generate-new.js", [setupId, true], function (err) {
     if (err) throw err;
-    // code that executes once generation is done...
-    console.log("Generate script finished!");
-    res.json({ success: true });
+    console.log("Generate script 1 finished!");
   });
-  //generateSimulation(setupId);
-});
 
-const applianceInits = require("./applianceInits.js");
-app.get("/appliance-data.js", (req, res) => {
-  fs.readFile("./applianceInits.js", (err, data) => {
-    res.json(applianceInits);
+  runScript("./generate-new.js", [setupId, false], function (err) {
+    if (err) throw err;
+    console.log("Generate script 2 finished!");
   });
-});
 
-// app.get('/results/:x/:y?', (req, res) => {
-//     x = req.params.x;
-//     y = req.params.y;
-//     if(y) { console.log(y); }
-//     res.json({x, y});
-// });
+  res.json("Running scripts!");
+});
 
 app.get("/jsonResults(/:id)?", (req, res) => {
   fileId = req.params.id;
@@ -369,8 +330,7 @@ app.get("/jsonResults(/:id)?", (req, res) => {
       }
     });
     if (!match) {
-      json = { result: "no matching id" };
-      res.json(json);
+      res.json({ result: "no matching id" });
     }
   });
 });
@@ -379,68 +339,119 @@ app.get("/getSetupJSON/:setupId", (req, res) => {
   setupId = req.params.setupId;
   fs.readFile("./setups/" + setupId + ".json", "utf8", (err, data) => {
     if (err) {
-      res.json({ err });
+      res.json({err});
     } else {
       res.json(JSON.parse(data));
     }
   });
 });
 
-app.listen(PORT, () => {
-  console.log("Running server on port 5002.");
-});
-
-// Child process script:
-var childProcess = require("child_process");
-const { connect } = require("http2");
-
-function condense_hourly(rooms) {
-  console.log("Condensing hourly.");
-  for (i = 0; i < rooms.length; i++) {
-    let appliances = rooms[i].appliances;
-    for (j = 0; j < appliances.length; j++) {
-      let appliance_data = appliances[j].data;
-      let new_x = [];
-      let new_y = [];
-      let y_sum = 0;
-      let x = 0;
-      for (y_i = 0; y_i < appliance_data[0].y.length; y_i++) {
-        y_sum += appliance_data[0].y[y_i];
-        if ((y_i + 1) % 60 == 0) {
-          new_x.push(x);
-          new_y.push(y_sum);
-          y_sum = 0;
-          x++;
-        }
-      }
-      //console.log(new_y);
-      rooms[i].appliances[j].data[0].y = new_y;
-      rooms[i].appliances[j].data[0].x = new_x;
-      //console.log( rooms[i].appliances[j].appliance_id );
-      rooms[i].appliances[j].layout = {
-        title: rooms[i].appliances[j].appliance_id + " in " + rooms[i].room_id,
-        xaxis: { title: "time (hours)" },
-        yaxis: { title: "joules (watts/sec)" },
-      };
-    }
-  }
-  //console.log(rooms[0].appliances[0].data);
-  return rooms;
+function getData(outputId, callback) {
+  ///console.log(outputId);
+  fs.readFile("./outputs/"+outputId+".json", "utf8", (err, data) => {
+    callback(JSON.parse(data));
+  });
 }
 
+app.get("/weekly/:outputId", (req, res) => {
+  getData(req.params.outputId, (data) => {
+    if(!data) { res.json({"status" : false}); }
+    //console.log(data);
+    let settings = data[0];
+    let rooms = data[1];
+    rooms.forEach((room) => {
+      room.appliances.forEach((appliance) => {
+        //console.log(appliance);
+        let y = appliance.data[0].y;
+        //console.log(appliance, y);
+        appliance.data[0].y = y.chunk(168);
+      });
+      room.totalData = room.totalData[0].y.chunk(168);
+    });
+    res.status(200).json([settings, rooms]);
+  });
+});
+
+app.get("/weekly/:outputId/:weekNum", (req, res) => {
+  getData(req.params.outputId, (data) => {
+    console.log(data);
+    let settings = data[0];
+    let rooms = data[1];
+    rooms.forEach((room) => {
+      room.appliances.forEach((appliance) => {
+        //console.log(appliance);
+        let y = appliance.data[0].y;
+        //console.log(appliance, y);
+        appliance.data[0].y = y.chunk(168);
+      });
+      room.totalData[0].y = room.totalData[0].y.chunk(168);
+    });
+    if(req.params.weekNum) {
+      let weekNum = req.params.weekNum - 1;
+      rooms.forEach((room) => {
+        let newY = room.totalData[0].y[weekNum];
+        room.totalData[0].y = [];
+        room.totalData[0].y.push(newY);
+      });
+    }
+    res.status(200).json([settings, rooms]);
+  });
+});
+
+app.get("/weeklyResults/:outputId/:weekNum?", (req, res) => {
+  getData(req.params.outputId, (data) => {
+    let settings = data[0];
+    let rooms = data[1];
+    rooms.forEach((room) => {
+      room.appliances.forEach((appliance) => {
+        let y = appliance.data[0].y;
+        appliance.data[0].y = y.chunk(168);
+      });
+      room.totalData[0].y = room.totalData[0].y.chunk(168);
+    });
+    if(req.params.weekNum) {
+      let weekNum = req.params.weekNum - 1;
+      console.log("weekNum: " + weekNum);
+      rooms.forEach((room) => {
+        let newY = room.totalData[0].y[weekNum];
+        room.totalData[0].y = [];
+        room.totalData[0].y.push(newY);
+      });
+    }
+    data = [settings, rooms];
+    res.render("weeks", 
+      {
+        data,
+        helpers: { json: function (c) { return JSON.stringify(c); },
+      },
+    });
+  });
+});
+
+// Chunk function:
+// --------------- 
+Object.defineProperty(Array.prototype, "chunk", {
+  value: function (chunkSize) {
+    var R = [];
+    for (var i = 0; i < this.length; i += chunkSize)
+      R.push(this.slice(i, i + chunkSize));
+    return R;
+  },
+});
+
+// Child process runScript script:
+// -------------------------------
+var childProcess = require("child_process");
 function runScript(scriptPath, child_argv, callback) {
   // keep track of whether callback has been invoked to prevent multiple invocations
   var invoked = false;
-
   var process = childProcess.fork(scriptPath, child_argv);
-
   // listen for errors as they may prevent the exit event from firing
   process.on("error", function (err) {
     if (invoked) return;
     invoked = true;
     callback(err);
   });
-
   // execute the callback once the process has finished running
   process.on("exit", function (code) {
     if (invoked) return;

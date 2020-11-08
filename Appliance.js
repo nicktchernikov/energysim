@@ -1,35 +1,51 @@
 class Appliance {
-	constructor( _id, _type, _watts1, _watts2, _ontime, _maxtimes) {
+	constructor( _id, _type, _watts1, _watts2, _location, _motive, _min, _max, _alwaysOn) {
 		this.id = _id;
 		this.type = _type; 
-		this.watts1 = _watts1;
-		this.watts2 = _watts2;
-		this.ontime = _ontime;
-		this.max_times = _maxtimes;
-		this.last = 0;
-		this.state = -1; // appliances are off by default - deal with 'always on' appliances
-		this.watts = 0; // current output watts - off by default
-		this.prob = 0; // probability of being turned on at a given timestep
+
+		this.location = _location;
+
+		this.state = -1; // off when created
+		this.watts1 = _watts1; // on watts
+		this.watts2 = _watts2; // standby watts
+
+		this.timesTurnedOn = 0;
+		this.outputWatts = 0; // output watts
+
+		this.motive = _motive;
+
+		this.timeleft = 0;
+		this.min = _min;
+		this.max = _max;
+
+		this.alwaysOn = _alwaysOn;
 	}
 	
 	turnOn() {
 		this.state = 1;
-		this.watts = this.watts1;
+		this.outputWatts = this.watts1;
+		if(this.timeleft == 0) {
+			this.timeleft = getRandomInt(this.min, this.max);
+		}
 	}
-	turnOff() {
-		this.state = -1;
-		this.watts = 0;
+
+	turnOff(watchfulness) {
+		this.state = -1; // off
+		this.outputWatts = 0;
+		this.timeleft = 0;
 	}
+
 	turnStandby() {
 		this.state = 0;
-		this.watts = this.watts2;
+		this.outputWatts = this.watts2;
+		this.timeleft = 0;
 	}
-	setProb(prob) {
-		this.prob = prob;
-	}
-	setMaxTimes(times) {
-		this.max_times = times;
-	}
+}
+
+function getRandomInt(min, max) {
+	min = Math.ceil(min);
+	max = Math.floor(max);
+	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 module.exports = Appliance
