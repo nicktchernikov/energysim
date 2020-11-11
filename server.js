@@ -4,7 +4,7 @@ const fs = require("fs");
 const express = require("express");
 var exphbs = require("express-handlebars");
 const app = express();
-app.use(express.static("views/images"));
+app.use(express.static("views"));
 
 // Handelebars
 app.engine("handlebars", exphbs());
@@ -35,6 +35,10 @@ app.get("/appliance-data.js", (req, res) => {
   });
 });
 
+app.get('/applianceInits', (req,res) => {
+  res.json(applianceInits);
+});
+
 app.get("/", (req, res) => {
   //res.json({ msg: 'msg' });
   //res.json({sessionHouse, settings});
@@ -42,6 +46,63 @@ app.get("/", (req, res) => {
   res.render("index", {
     sessionHouse: sessionHouse,
     sessionSettings: sessionSettings,
+  });
+});
+
+app.post('/setSessionSetupId', (req, res) => {
+  let setupId = req.body.setupId;
+  sessionSettings.setupId = setupId;
+  res.status(200).send();
+});
+
+app.get('/getSessionSettings', (req, res) => {
+  res.json(sessionSettings);
+});
+
+app.post('/setupExists', (req, res) => {
+  let setupId = req.body.setupId;
+  fs.readdir('./setups', (err, filenames) => {
+    result = false;
+    if(err) throw err;
+    filenames.forEach(filename => {
+      if(setupId+'.json' == filename) {
+        result = true;
+      }
+    });
+    res.json({'exists' : result});
+  });
+});
+
+app.post('/setSetupSessionWithSetupId', (req, res) => {
+  let setupId = req.body.setupId;
+  fs.readFile('./setups/'+setupId+'.json', 'utf8', (err, data) => {
+    if(err) throw err;
+    json = JSON.parse(data);
+    settings = json[0].settings[0];
+    rooms = json[1].rooms;
+    Object.assign(sessionSettings, settings);
+    sessionHouse.splice(0, sessionHouse.length);
+    rooms.forEach(room => {sessionHouse.push(room);});    
+  });
+  res.status(200).send();
+});
+
+app.get('/load', (req, res) => {
+  res.json(sessionHouse);
+});
+
+app.get("/newIndex", (req, res) => {
+  //res.json({ msg: 'msg' });
+  //res.json({sessionHouse, settings});
+  //console.log(sessionSettings);
+  res.render("newIndex", {
+    sessionHouse: sessionHouse,
+    sessionSettings: sessionSettings,
+    helpers: {
+      json: function (context) {
+        return JSON.stringify(context);
+      },
+    },
   });
 });
 
@@ -58,8 +119,15 @@ app.get("/empty", (req, res) => {
   res.json(sessionHouse);
 });
 
+app.post('/set', (req, res) => {
+  let rooms = req.body;
+  sessionHouse.splice(0, sessionHouse.length);
+  res.status(200).send();
+});
+
 // view sessionHouse array
 app.get("/view", (req, res) => {
+  console.log(sessionHouse);
   res.json(sessionHouse);
 });
 
@@ -70,12 +138,11 @@ app.post("/add-room", (req, res) => {
   room = { room_id: name, appliances: [] };
   sessionHouse.push(room);
   //console.log('Added ' + name);
-  res.redirect("/");
+  res.status(200).send();
 });
 
 // add an appliance to a room
 app.post("/add-appliance", (req, res) => {
-  //console.log(req.body);
   let room_id = req.body.room_id;
   let appliance_id = req.body.appliance_id;
   console.log(room_id, appliance_id);
@@ -84,10 +151,11 @@ app.post("/add-appliance", (req, res) => {
     if (room.room_id == room_id) {
       //console.log('adding ' + appliance_id);
       sessionHouse[i].appliances.push({ appliance_id: appliance_id });
+      console.log('Added');
     }
     i++;
   });
-  res.redirect("/");
+  res.status(200).send();
 });
 
 app.get("/setups", (req, res) => {
@@ -131,17 +199,17 @@ app.post("/remove-appliance", (req, res) => {
 });
 
 app.post("/remove-room", (req, res) => {
+  console.log(req.body);
   roomId = req.body.room_id;
   for (i = 0; i < sessionHouse.length; i++) {
     if (sessionHouse[i].room_id == roomId) {
       sessionHouse.splice(i, 1);
     }
   }
-  res.status(200).end();
+  res.status(200).send();
 });
 
 app.post("/setsessionHouse", (req, res) => {
-  //console.log(req.body);
   res.json(req.body);
 });
 
@@ -387,7 +455,7 @@ app.get("/weekly/:outputId/:weekNum", (req, res) => {
       room.totalData[0].y = room.totalData[0].y.chunk(168);
     });
     if(req.params.weekNum) {
-      let weekNum = req.params.weekNum - 1;
+      let weekNum = req.params.weekNum;
       rooms.forEach((room) => {
         let newY = room.totalData[0].y[weekNum];
         room.totalData[0].y = [];
