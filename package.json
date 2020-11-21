@@ -9,8 +9,6 @@
   "dependencies": {
     "express": "^4.17.1",
     "express-handlebars": "^4.0.3",
-    "fomantic-ui": "^2.8.7",
-    "gulp": "^4.0.2",
     "plotly": "^1.0.6"
   },
   "devDependencies": {
@@ -18,7 +16,7 @@
   },
   "scripts": {
     "dev": "nodemon server -e js,json,handlebars",
-    "dev2": "nodemon server.js -e js,json,handlebars"
+    "server" : "nodemon server -e js,json,handlebars"
   },
   "nodemonConfig": {
     "ignore": [
