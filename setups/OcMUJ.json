@@ -1,0 +1,27 @@
+[
+    {
+        "settings": [
+            {
+                "setupId": "OcMUJ",
+                "start": "1605133385",
+                "days": "100",
+                "watchfulness": "0.1"
+            }
+        ]
+    },
+    {
+        "rooms": [
+            {
+                "room_id": "living_room_rIhEy",
+                "appliances": [
+                    {
+                        "appliance_id": "microwave_SqDPJ"
+                    },
+                    {
+                        "appliance_id": "microwave_mPa85"
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -1,28 +1,42 @@
 body {
-    background-color: #ffffff;
-    -webkit-font-smoothing: antialiased;
-    -moz-font-smoothing: grayscale;
-  }
-  .ui.menu .item img.ui.mini.image {
-    margin-right: 1.5em;
-  }
-  .ui.main.text.container {
-    margin-top: 7em;
-  }
-  .ui.main.text.container .ui.image {
-    margin-top: 2em;
-  }
-  .ui.footer.segment {
-    margin: 5em 0em 0em;
-    padding: 5em 0em;
-  }
-  .title {
-    font-family: Arial;
-    font-size: 14pt;
-  }
-  #setupId {
-  }
-  #customSetupId {
-    width: 141px;
-    margin-top: -2px;
-  }
+  background-color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-font-smoothing: grayscale;
+}
+.ui.menu .item img.ui.mini.image {
+  margin-right: 1.5em;
+}
+.ui.main.text.container {
+  margin-top: 7em;
+}
+.ui.main.text.container .ui.image {
+  margin-top: 2em;
+}
+.ui.footer.segment {
+  margin: 5em 0em 0em;
+  padding: 5em 0em;
+}
+.title {
+  font-family: Arial;
+  font-size: 14pt;
+}
+
+#customSetupId {
+  width: 141px;
+  margin-top: -2px;
+}
+#loaded{
+  display: none;
+}
+#setupIdBox{
+  font-size: 12pt;
+}
+#generateMessage{
+  display: none;
+}
+#results {
+  display: none;
+}
+#loading {
+  display: none;
+}

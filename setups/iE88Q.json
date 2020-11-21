@@ -1,0 +1,24 @@
+[
+    {
+        "settings": [
+            {
+                "setupId": "iE88Q",
+                "start": "1605132193",
+                "days": "50",
+                "watchfulness": "0.1"
+            }
+        ]
+    },
+    {
+        "rooms": [
+            {
+                "room_id": "living_room_9gTPE",
+                "appliances": [
+                    {
+                        "appliance_id": "microwave_6j9W7"
+                    }
+                ]
+            }
+        ]
+    }
+]

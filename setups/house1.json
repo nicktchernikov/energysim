@@ -1,0 +1,43 @@
+[
+    {
+        "settings": [
+            {
+                "setupId": "house1",
+                "start": "1605561981",
+                "days": "7",
+                "watchfulness": "0.5"
+            }
+        ]
+    },
+    {
+        "rooms": [
+            {
+                "room_id": "basement_bNKbB",
+                "appliances": [
+                    {
+                        "appliance_id": "oven_CLCrT"
+                    },
+                    {
+                        "appliance_id": "stove_DDZYK"
+                    }
+                ]
+            },
+            {
+                "room_id": "bedroom_RaWai",
+                "appliances": [
+                    {
+                        "appliance_id": "oven_M5SCm"
+                    }
+                ]
+            },
+            {
+                "room_id": "kitchen_tqgXU",
+                "appliances": [
+                    {
+                        "appliance_id": "kettle_AWybA"
+                    }
+                ]
+            }
+        ]
+    }
+]

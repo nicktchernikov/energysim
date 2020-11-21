@@ -25,7 +25,8 @@ class Appliance {
 		this.state = 1;
 		this.outputWatts = this.watts1;
 		if(this.timeleft == 0) {
-			this.timeleft = getRandomInt(this.min, this.max);
+            let minutes = getRandomInt(this.min, this.max);
+            this.timeleft = Math.max(1, Math.floor(minutes/15));
 		}
 	}
 

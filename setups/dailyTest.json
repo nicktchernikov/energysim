@@ -1,0 +1,49 @@
+[
+    {
+        "settings": [
+            {
+                "setupId": "dailyTest",
+                "start": "1605917455",
+                "days": "28",
+                "watchfulness": "0.1"
+            }
+        ]
+    },
+    {
+        "rooms": [
+            {
+                "room_id": "basement_ue9un",
+                "appliances": [
+                    {
+                        "appliance_id": "computer_eJ8JT"
+                    },
+                    {
+                        "appliance_id": "light_wyNKC"
+                    }
+                ]
+            },
+            {
+                "room_id": "living_room_6dIis",
+                "appliances": [
+                    {
+                        "appliance_id": "tv_DIgEj"
+                    },
+                    {
+                        "appliance_id": "xbox_He0bT"
+                    }
+                ]
+            },
+            {
+                "room_id": "kitchen_lHXJN",
+                "appliances": [
+                    {
+                        "appliance_id": "oven_nHJKl"
+                    },
+                    {
+                        "appliance_id": "stove_mTIbZ"
+                    }
+                ]
+            }
+        ]
+    }
+]

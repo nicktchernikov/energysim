@@ -1,9 +1,10 @@
+// Node imports
 const fs = require("fs");
 const path = require("path");
 
+// Imports
 const helpers = require("./helpers");
-
-const Agent = require("./Agent.js");
+const Agent = require("./Agent-new.js");
 const Appliance = require("./Appliance.js");
 const appInits = require("./applianceInits.js");
 
@@ -73,10 +74,36 @@ appsH = apps.filter(app => (app.motive == 'hunger' && !app.alwaysOn));
 // - Boredom apps 
 appsB = apps.filter(app => (app.motive == 'boredom' && !app.alwaysOn));
 
+
+// Daily room data 
+let dailyRoomData = [];
+rooms.forEach(room => {
+    let appliancesDaily = [];
+    room.appliances.forEach(appliance => {
+        appliancesDaily.push(
+            {
+                appliance_id : appliance.appliance_id,
+                dailyTotal : [0,]
+            }
+        );
+    });
+    dailyRoomData.push(
+        {
+            room_id: room.room_id,
+            dailyTotal: [0,],
+            appliances: appliancesDaily
+        });
+});
+
+// Debugging:
+    // fs.writeFile("./test.json", JSON.stringify(dailyRoomData), "utf8", (err) => {
+    //     if(err) throw err;
+    // });
+
 // - Tracking
 let weekNum = 0;
 let pctDone = 0;
-let dayNum = 1;
+let dayNum = 0;
 function updatePercentDone(newPctDone) {
     pctDone = newPctDone;
     //console.log(pctDone + "% Done");
@@ -96,11 +123,22 @@ for(timestep = 0; timestep < timesteps; timestep++) {
     if(newPctDone > pctDone) updatePercentDone(newPctDone);
 
     // Days elapsed 
-    newDayNum = Math.floor(timestep/96) + 1;
-    if(newDayNum > dayNum) updateDayNum(newDayNum); 
+    newDayNum = Math.floor(timestep/96);
+    if(newDayNum > dayNum) {
+        updateDayNum(newDayNum); 
+        dailyRoomData.forEach((data) => {
+            data.dailyTotal[dayNum] = 0;
+            data.appliances.forEach((app) => {
+                app.dailyTotal[dayNum] = 0;
+            });
+        });
+    }
 
     // Triggers when exactly a week has elapsed
     if(Math.floor(dayNum/7) > weekNum) {  
+        
+        // One week has passed - need to exit for loop 
+
         weeklyRoomData.forEach((data) => {
           // Goal is set to 5% less than the previous week's total 
           data.diffs[weekNum] = data.totals[weekNum] - data.goals[weekNum];
@@ -202,7 +240,7 @@ for(timestep = 0; timestep < timesteps; timestep++) {
         }
     }
 
-    // Store watts
+    // Store/increment watts
     rooms.forEach((room) => {
         room.appliances.forEach((appliance) => {
             let appObj = apps.filter((appObj) => appObj.id == appliance.appliance_id)[0];
@@ -213,6 +251,16 @@ for(timestep = 0; timestep < timesteps; timestep++) {
             weeklyRoomData.forEach((data) => {
                 if(data.room_id == room.room_id) data.totals[weekNum] += watts;
             });
+            dailyRoomData.forEach(data => {
+                if(data.room_id == room.room_id) {
+                    data.dailyTotal[dayNum] += watts;
+                }
+                data.appliances.forEach(app => {
+                    if(app.appliance_id == appliance.appliance_id) {
+                        app.dailyTotal[dayNum] += watts;
+                    }
+                });
+            });
         });
     });    
 
@@ -220,10 +268,14 @@ for(timestep = 0; timestep < timesteps; timestep++) {
     timestamp += (15*60);
 }
 
+fs.writeFile("./test.json", JSON.stringify(dailyRoomData), "utf8", (err) => {
+    if(err) throw err;
+});
+
 // Finish 
 // -----
 output = [];
-effect ? filename = setupId + "_effect.json" : filename = setupId + "_noEffect.json";
+effect ? filename = setupId + "_effect" : filename = setupId + "_noEffect";
 
 settings.filename = filename;
 output.push(settings);
@@ -254,12 +306,19 @@ rooms.forEach((room) => {
 // Write data
 output.push(rooms);
 outputStr = JSON.stringify(output);
-fs.writeFile("./outputs/"+filename, outputStr, "utf8", (err) => {
+fs.writeFile("./outputs/"+filename+".json", outputStr, "utf8", (err) => {
     if(err) { 
         throw err;
     } else {
         console.log("Wrote output to /outputs folder. Filename: " + filename);
     }
+});
+
+dailyData = JSON.stringify(dailyRoomData);
+fs.writeFile("./dailyOutputs/"+filename+"_daily.json", dailyData, "utf8",
+(err, data) => {
+    if(err) throw err;
+    console.log("Wrote daily data to " + filename+"_daily.json");
 });
 
 // TODO: 

@@ -1,0 +1,464 @@
+<style type="text/css">
+  #setupId {
+    display: inline-block;
+  }
+  #loadSetupIdError{
+    color: black;
+  }
+  #generateBox {
+    display: none;
+  }
+  #loading {
+    display: none;
+  }
+  #save {
+  }
+  #newId {
+    font-size: 8pt;
+  }
+  #daysInput, #watchfulnessInput {
+    width: 60px;
+  }
+</style>
+
+<script>
+  $(document).ready(() => {
+
+    {{#each sessionSettings}}
+      let {{@key}} = {{this}};
+    {{/each}} 
+
+    $('#daysInput').val(days);
+    $('#watchfulnessInput').val(watchfulness);
+
+    let setupId = localStorage.getItem('setupId');
+    if (!setupId) {
+      setupId = makeid(5);
+      localStorage.setItem('setupId', setupId);
+    }
+
+    $("#setupId").text(setupId);
+
+    function setupExists(setupId, callback) {
+      $.ajax({
+        url: '/checkSetup',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ setupId }),
+        success: callback
+      });
+    }
+
+    setupExists(setupId, (result) => {
+      if (result.exists) {
+        $('#generateBox').css('display', 'block');
+        $('#generateSetupId').text("Generating with Setup ID: " + result.setupId);
+        $("#loadSetupId").text("Load Setup ID: " + setupId);
+      }
+    });
+    
+    // Populate each appliance dropdown on html page
+    $.getJSON('./appliance-data.js', (data) => {
+      let appliance_list = data;
+      //console.log(appliance_list);
+      $.each(appliance_list, (index, appliance) => {
+        appliance_type = appliance.type;
+        appliance_type = appliance_type.replace(' ', '_');
+        $(".appliance-list").append("<option value='" + appliance_type + "'>" + appliance.type + "</option>");
+      });
+    });
+
+    $('.add_room').on('click', function (event) {
+      let room_name = (event.target.innerHTML).toLowerCase();
+      room_name = room_name.trim();
+      let id = Math.floor(1000 + Math.random() * 9000); //random id
+      room_name = room_name + "_" + id;
+      $.ajax({
+        url: '/add-room',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ name: room_name })
+      })
+        .done((data) => {
+          location.reload();
+        });
+    });
+
+    $('.remove_appliance').on('click', (event) => {
+      let room_id = (event.target.id).split("-")[1];
+      let appliance_id = (event.target.id).split("-")[2];
+      $.ajax({
+        url: '/remove-appliance',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ room_id: room_id, appliance_id })
+      })
+        .done((data) => {
+          location.reload();
+        });
+    });
+
+    $('.remove_room').on('click', (event) => {
+      // TODO: Remove room code here
+      $.post('/remove-room', {room_id: event.target.id}, '', 'json');
+      location.reload();
+    });
+
+    $('.add_appliance').on('click', (event) => {
+      let room_id = (event.target.id).split("-")[1];
+      let dropdown_id = room_id + "_appliances";
+      let selected_type = $("select[name='" + dropdown_id + "']").val();
+      let id = Math.floor(1000 + Math.random() * 9000); //random id
+      let appliance_id = selected_type + "_" + id;
+      $.ajax({
+        url: '/add-appliance',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ room_id: room_id, appliance_id })
+      })
+        .done((data) => {
+          location.reload();
+        });
+    });
+
+    $("#clear").click(() => {
+      $.get("/empty", () => {
+        location.reload();
+      });
+    });
+
+    $("#save").click(() => {
+      start = Math.floor(Date.now() / 1000);
+      days = parseInt($("#daysInput").val());
+      watchfulness = parseFloat($("#watchfulnessInput").val());
+      effect = false;
+      increment = 60;
+
+      //console.log('saving!');
+      $.ajax({
+        url: '/save',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ setupId, start, increment, days, watchfulness, effect })
+      })
+        .done((data) => {
+          if(data.error == 'no appliances') {
+            alert('Please add at least one room and put an appliance in it.');
+          } else {
+            $("#generate").show();
+            $("#loading").hide();
+            alert('House setup is saved to ' + setupId + '.json!');
+            location.reload();
+          }
+        });
+    });
+
+    $('#daysInput').change((event) => {
+      newDays = event.target.value;
+      $.post('/setDays', {newDays});
+    });
+
+    $('#watchfulnessInput').change((event) => {
+      newWatchfulness = event.target.value;
+      $.post('/setWatchfulness', {newWatchfulness});
+    });
+
+    $('#generateButton').click(() => {
+      $('#generateStatus').text('Generating...');
+      ///$('#loading').show();
+      $.ajax({
+        url: '/generate/' + setupId,
+        type: 'GET'
+      }).done((data) => {
+        //alert('Finished');
+        //$("#loading").hide();
+        //$('#generateStatus').html('Generated! <a href="./results/' + setupId + '"> View Results </a>');
+        $('#generateStatus').html('Result will be available in Results section once complete.');
+      });
+    });
+
+    $('#newId').click(() => {
+      $.get('/empty');
+      setupId = makeid(5);
+      localStorage.setItem('setupId', setupId);
+      location.reload();
+    });
+
+    $('#loadButton').click(() => {
+      getSetupJSON(setupId, function (data) {
+        settings = data[0].settings[0];
+        newDays = settings.days;
+        newWatchfulness = settings.watchfulness;
+        $.post('/setDays', {newDays});
+        $.post('/setWatchfulness', {newWatchfulness});
+        rooms = data[1].rooms;
+        console.log(rooms);
+        if (rooms.length == 0) {
+          $("#roomsMessage").text('No rooms!');
+        } else {
+          $.get('/empty', () => {
+            rooms.forEach((room) => {
+              room_id = room.room_id;
+              $.ajax({
+                url: '/add-room',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ name: room_id })
+              });
+              appliances = room.appliances;
+              if (appliances.length > 0) {
+                appliances.forEach((appliance) => {
+                  appliance_id = appliance.appliance_id;
+                  $.ajax({
+                    url: '/add-appliance',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ room_id, appliance_id })
+                  }).done(() => {
+                    location.reload();
+                  });
+                });
+              }
+            });
+          })
+        }
+      })
+    });
+
+    function getSetupJSON(setupId, callback) {
+      $.ajax({
+        url: '/getSetupJSON/' + setupId,
+        type: 'GET',
+        success: callback
+      });
+    }
+
+    $('#chooseLoad').click(() => {
+      let loadId = $('#setups').val();
+      setupId = loadId.split(".")[0];
+      localStorage.setItem('setupId', setupId);
+      location.reload();
+    });
+
+    $('#setSetupIdCustom').click( () => {
+      let setupIdCustom = $('#setupIdCustom').val();
+      localStorage.setItem('setupId', setupIdCustom);
+      setupId = setupIdCustom;
+      location.reload();
+    });
+
+    $.getJSON('/setups', (data) => {
+      data.forEach((setupFilename) => {
+        $('#setups').append(
+          '<option value="' + setupFilename + '"> ' + setupFilename + ' </option>'
+        );
+      });
+    });
+  });
+
+  function makeid(length) {
+    var result = '';
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for (var i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+  }
+
+</script>
+
+<div class="container-fluid" style="padding: 10px">
+  <div class="col-sm-16">
+    <div class="well">
+      <h2>Energy Simulation Setup</h2>
+
+      <a href="./results">Go to Results</a>
+
+      <hr>
+
+      <h4 style="display: inline-block;"> Setup Id: </h4>
+      <div id="setupId" style="padding: 2px; border: 1px solid black;"></div>
+      </h4> &nbsp; <b>OR</b> &nbsp;
+      <button id="newId" class="btn btn-primary">New Setup</button>
+      </h4> &nbsp; <b>OR</b> &nbsp; set you own Setup Id:
+      <input type="text" id="setupIdCustom" />
+      <button id="setSetupIdCustom" class="btn btn-primary">Set</button>
+      <hr>
+
+      <h3>Load Existing Setup</h3>
+      <div id="loadSetupId"><span id="loadSetupIdError">No Filename chosen</span></div>
+      <select id="setups"></select>
+      <button id="chooseLoad">Set Filename</button>
+      <br />
+      <button id="loadButton" class="btn btn-primary" style="margin-top: 5px">Load Setup File</button>
+
+      <hr>
+
+      <h2> Edit </h2>
+
+      <h4> Add a Room </h4>
+      <div id="room_buttons">
+      </div>
+
+      <button class="btn btn-primary add_room">
+        Kitchen
+      </button>
+
+      <button class="btn btn-primary add_room">
+        Living Room
+      </button>
+
+      <button class="btn btn-primary add_room">
+        Bedroom 1
+      </button>
+
+      <button class="btn btn-primary add_room">
+        Bedroom 2
+      </button>
+
+      <button class="btn btn-primary add_room">
+        Bedroom 3
+      </button>
+
+      <button class="btn btn-primary add_room">
+        Laundry Room
+      </button>
+
+      <button class="btn btn-primary add_room">
+        Bathroom
+      </button>
+
+      <br /> <br />
+      
+      <h4> Rooms </h4>
+      <div id="roomsMessage"></div>
+
+      <div id="rooms">
+        {{#sessionHouse}}
+        <hr>
+        <strong><h4>{{room_id}}</h4></strong>
+        <button class="remove_room btn btn-warning" id="{{room_id}}" style="font-size: 8pt;"> Remove Room </button> 
+        <br /><br />
+        {{#appliances}}
+        <button class="remove_appliance btn btn-primary" id="from-{{../room_id}}-{{appliance_id}}"
+          style="font-size: 8pt;">
+          Remove Appliance
+        </button>
+        <div class='appliance' style="display:inline-block;">{{appliance_id}}</div>
+        <br /><br />
+        {{/appliances}}
+        Add an appliance to this room:
+        <div class="row">
+          <div class="col-sm-2">
+            <select class="appliance-list form-control" name="{{this.room_id}}_appliances">
+            </select>
+          </div>
+          <div class="col-sm-2">
+            <button class="btn btn-primary add_appliance" id="to-{{this.room_id}}" class="btn btn-primary">
+              Add
+            </button>
+          </div>
+        </div>
+        {{/sessionHouse}}
+      </div>
+
+      <hr />
+
+      <p><button id="clear" class="btn btn-primary"> Clear Setup </button>
+
+      <br /><br />
+
+      <h4> Days:
+        <input class="form-control" value="" id="daysInput" type="number" />
+      </h4>
+
+      <h4> Agent Watchfulness:
+        <input class="form-control" min="0.0" max="1.0" step="0.1" value="0.5" id="watchfulnessInput" type="number" />
+      </h4>
+
+      <br /> <br />
+
+      <p><button id="save" class="btn btn-success"> Save </button>
+
+        <hr>
+
+      <p id="generateBox">
+        <button id="generateButton" class="btn btn-primary">Generate</button>
+      <div id="generateSetupId"></div>
+      </p>
+      <div id="generateStatus"></div>
+      <div id="loading"><img src='/images/loading-circle.gif'></div>
+
+    </div>
+
+    {{!-- <div class="row">
+      <div class="col-sm-3">
+        <div class="well">
+          <h4>Thing</h4>
+          <p>...</p>
+        </div>
+      </div>
+      <div class="col-sm-3">
+        <div class="well">
+          <h4>Thing</h4>
+          <p>...</p>
+        </div>
+      </div>
+      <div class="col-sm-3">
+        <div class="well">
+          <h4>Thing</h4>
+          <p>...</p>
+        </div>
+      </div>
+      <div class="col-sm-3">
+        <div class="well">
+          <h4>Thing</h4>
+          <p>...</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-sm-8">
+        <div class="well">
+          <p>Text</p>
+        </div>
+      </div>
+      <div class="col-sm-4">
+        <div class="well">
+          <p>Text</p>
+        </div>
+      </div>
+    </div>
+  </div> --}}
+
+
+</div>
+
+<!-- Button trigger modal -->
+<!--<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
+    Modal
+</button>-->
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        ...
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
