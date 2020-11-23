@@ -235,7 +235,7 @@ rooms = helpers.condense(rooms);
 rooms.forEach((room) => {
     room.totalData = [];
     room.totalData.push({y: []});
-    room.totalData.layout = {title: "total for " + room.room_id, xaxis: { title: "time (hours)" }, yaxis: { title: "joules (watts/sec)"}};
+    room.totalData.layout = {title: "total for " + room.room_id, xaxis: { title: "time (hours)" }, yaxis: { title: "watts"}};
     for(var i = 0; i < timesteps / 4; i++) {
         hourTotal = 0;
         room.appliances.forEach(app => hourTotal += app.data[0].y[i]);
@@ -246,8 +246,7 @@ rooms.forEach((room) => {
 // Add weekly data
 rooms.forEach((room) => {
     weekly = weeklyRoomData.filter((weekly) => room.room_id == weekly.room_id)[0];
-    weekly = weekly.length 
-    //console.log(weekly);
+    console.log(weekly);
     room.weekly = weekly;
 });
 

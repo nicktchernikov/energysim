@@ -4,7 +4,7 @@ const path = require("path");
 
 // Imports
 const helpers = require("./helpers");
-const Agent = require("./Agent-new.js");
+const Agent = require("./Agent.js");
 const Appliance = require("./Appliance.js");
 const appInits = require("./applianceInits.js");
 
@@ -136,9 +136,6 @@ for(timestep = 0; timestep < timesteps; timestep++) {
 
     // Triggers when exactly a week has elapsed
     if(Math.floor(dayNum/7) > weekNum) {  
-        
-        // One week has passed - need to exit for loop 
-
         weeklyRoomData.forEach((data) => {
           // Goal is set to 5% less than the previous week's total 
           data.diffs[weekNum] = data.totals[weekNum] - data.goals[weekNum];
@@ -287,7 +284,7 @@ rooms = helpers.condense(rooms);
 rooms.forEach((room) => {
     room.totalData = [];
     room.totalData.push({y: []});
-    room.totalData.layout = {title: "total for " + room.room_id, xaxis: { title: "time (hours)" }, yaxis: { title: "joules (watts/sec)"}};
+    room.totalData.layout = {title: "total for " + room.room_id, xaxis: { title: "time (hours)" }, yaxis: { title: "watts"}};
     for(var i = 0; i < timesteps / 4; i++) {
         hourTotal = 0;
         room.appliances.forEach(app => hourTotal += app.data[0].y[i]);

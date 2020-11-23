@@ -54,25 +54,27 @@
 
         // When DOM elements are loaded
         $(document).ready(() => {
+            // -- Activate UI
             activateUI();
 
-            // Load setup filenames
+            // -- Load setup filenames
             loadOutputFilenames();
 
-            // Set listeners
+            // -- Set listeners
             $('#loadOutputFileButton').click(()=> {
                 let outputId = $('input[name="filename"]').val();
                 $('#results').show();
                 $('#plots').html('Loading...');
                 $.get('/getOutputTotalJSON/'+outputId, (data)=>{
-                    // TODO
+                    // TODO: 
+                    /// - Move layout stuff into this file only
                     let rooms = data[1];
                     $('#plots').html();
                     let html = '';
                     let appliances = [];
-                    $.each(rooms, (key, room) => {
+                    $.each(rooms, (_, room) => {
                         html += '<h3>'+room.room_id+'</h3>';
-                        $.each(room.appliances, (key, appliance) => {
+                        $.each(room.appliances, (_, appliance) => {
                             html += '<h4>'+appliance.appliance_id+'</h4>';
                             html += '<div id="'+appliance.appliance_id+'"></div>';
                             appliances.push(appliance);
@@ -88,14 +90,14 @@
         });
 
         // Functions
+        // -- Activate UI Elements
         function activateUI() {
             $('.ui.selection.dropdown').dropdown();
         }
-
+        // --- Add setup filenmames
         function loadOutputFilenames() {
-        // Add setup filenmames
-            $.getJSON('/outputs', (data) => {
-                data.forEach((outputFilename) => {
+            $.getJSON('/getOutputs', (res) => { 
+                res.forEach((outputFilename) => {
                     outputFilename = outputFilename.split('.')[0];
                     $('#outputFilenames').append(
                         '<div class="item" data-value="'+outputFilename+'">'+outputFilename+'</div>'

@@ -82,7 +82,7 @@
             $('.ui.selection.dropdown').dropdown();
         }
         function loadSetupFilenames() {
-            $.getJSON('/setups', (data) => {
+            $.getJSON('/getSetups', (data) => {
                 data.forEach((setupFilename) => {
                     setupFilename = setupFilename.split('.')[0];
                     $('#setupFilenames').append(

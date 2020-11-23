@@ -1,10 +1,11 @@
 const path = require("path");
 const fs = require("fs");
 
+// Express 
 const express = require("express");
 var exphbs = require("express-handlebars");
 const app = express();
-app.use(express.static("views"));
+app.use(express.static("views")); // Folder name for static files
 
 // Handelebars
 app.engine("handlebars", exphbs());
@@ -12,36 +13,61 @@ app.set("view engine", "handlebars");
 
 // Body Parser Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({extended: false}));
 
-// Port 
+// Set a PORT
 const PORT = process.env.PORT || 3000;
 
-// Start server
+// Start the server
 app.listen(PORT, () => {
   console.log("Running server on port " + PORT + ".");
 });
 
-// Default session and house settings
-const sessionSettings = {
-  days: 7,
-  watchfulness: 0.5,
-  effect: false
-};
-const sessionHouse = [];
+// Render Generate page (HTML)
+app.get('/generate', (_, res) => res.render('generate'));
 
-// Load appliance data (remove?)
-const applianceInits = require("./applianceInits.js");
-app.get("/appliance-data.js", (req, res) => {
-  fs.readFile("./applianceInits.js", (err, data) => {
-    res.json(applianceInits);
+// Render Results page (HTML)
+app.get("/results", (req, res) => {
+  filenames = fs.readdirSync(path.join(__dirname, "outputs"));
+  filename = filenames[0]; // Choose first filename in list
+
+  fs.readFile(path.join(__dirname, "outputs", filename), (err, data) => {
+    if (err) throw err;
+    let dataset = JSON.parse(data);
+    let filenames = fs.readdirSync(path.join(__dirname, "outputs"));
+    res.render("results", {
+      dataset,
+      filenames,
+      helpers: {
+        json: function (context) { return JSON.stringify(context); },
+      },
+    });
   });
 });
 
-// Appliance Inits (remove?)
-app.get('/applianceInits', (req,res) => { res.json(applianceInits); });
+// Default sessionSettings and sessionHouse
+const sessionSettings = {
+  days: 365,
+  watchfulness: 0.01
+};
+const sessionHouse = [];
 
-// Get main page
+// Load appliance data 
+const applianceInits = require("./applianceInits.js");
+
+// Get Ooutput Data as JSON as a callback
+function getOutputData(outputId, callback) {
+  fs.readFile("./outputs/"+outputId+".json", "utf8", (err, data) => {
+    callback(JSON.parse(data));
+  });
+}
+
+/* 
+    App Routes: 
+    ----------
+*/
+
+// Render 
 app.get("/", (req, res) => {
   res.render("index", {
     sessionHouse: sessionHouse,
@@ -52,25 +78,27 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get('/newResults', (req, res) => {
-  res.render('newResults');
-});
+// Get applianceInits.js as JSON from frontend
+app.get('/applianceInits', (_,res) => res.json(applianceInits));
 
+// Helper to easily render JSON files
+app.get("/*.json", (req, res) => res.json(require("./" + req.url)));
+
+// Get Session Settings as JSON
+app.get('/getSessionSettings', (_, res) =>  res.json(sessionSettings));
+
+// Set Session Setup Id 
 app.post('/setSessionSetupId', (req, res) => {
-  let setupId = req.body.setupId;
-  sessionSettings.setupId = setupId;
+  sessionSettings.setupId = req.body.setupId;
   res.status(200).send();
 });
 
-app.get('/getSessionSettings', (req, res) => {
-  res.json(sessionSettings);
-});
-
+// Check that a Setup file exists
 app.post('/setupExists', (req, res) => {
   let setupId = req.body.setupId;
   fs.readdir('./setups', (err, filenames) => {
-    result = false;
     if(err) throw err;
+    result = false;
     filenames.forEach(filename => {
       if(setupId+'.json' == filename) {
         result = true;
@@ -80,6 +108,7 @@ app.post('/setupExists', (req, res) => {
   });
 });
 
+// Set Session Setup using Setup Id
 app.post('/setSetupSessionWithSetupId', (req, res) => {
   let setupId = req.body.setupId;
   fs.readFile('./setups/'+setupId+'.json', 'utf8', (err, data) => {
@@ -89,126 +118,58 @@ app.post('/setSetupSessionWithSetupId', (req, res) => {
     rooms = json[1].rooms;
     Object.assign(sessionSettings, settings);
     sessionHouse.splice(0, sessionHouse.length);
-    rooms.forEach(room => {sessionHouse.push(room);});  
-    //console.log(sessionHouse);  
+    rooms.forEach(room => sessionHouse.push(room));  
   });
+
   res.status(200).send();
 });
 
-app.get('/reset', (req, res) => {
+// Reset sessionHouse and sessionSettings
+app.get('/resetSession', (req, res) => {
   let settings = {
-    days: 7,
-    watchfulness: 0.5
+    days: 365,
+    watchfulness: 0.01
   };
   sessionHouse.splice(0, sessionHouse.length);
   Object.assign(sessionSettings, settings);
+
   res.status(200).send();
 });
 
-app.get('/load', (req, res) => {
-  res.json(sessionHouse);
-});
-
-app.get("/newIndex", (req, res) => {
-  res.render("newIndex", {
-    sessionHouse: sessionHouse,
-    sessionSettings: sessionSettings,
-    helpers: {
-      json: function (context) {
-        return JSON.stringify(context);
-      },
-    },
-  });
-});
-
-// Get JSON Files
-app.get("/*.json", (req, res) => res.json(require("./" + req.url)));
-
-// empty array
-app.get("/empty", (req, res) => {
+// Empty sessionHouse and return as JSON
+app.get("/emptyHouse", (req, res) => {
   sessionHouse.splice(0, sessionHouse.length);
   res.json(sessionHouse);
 });
 
-app.post('/set', (req, res) => {
-  let rooms = req.body;
-  sessionHouse.splice(0, sessionHouse.length);
-  res.status(200).send();
-});
+// Get sessionHouse as JSON
+app.get("/getSessionHouse", (_, res) => res.json(sessionHouse));
 
-// get sessionHouse
-app.get("/getSessionHouse", (req, res) => {
-  res.json(sessionHouse);
-});
-
-// add a room to the sessionHouse
+// Add a room to the sessionHouse
 app.post("/add-room", (req, res) => {
-  name = req.body.name;
-  name = name.replace(" ", "_");
+  name = req.body.name.replace(" ", "_");
   room = { room_id: name, appliances: [] };
   sessionHouse.push(room);
-  ////console.log('Added ' + name);
+
   res.status(200).send();
 });
 
-app.get('/generate', (req, res) => {
-  res.render('generate');
-});
-
-// add an appliance to a room
+// Add an appliance to a room in sessionHouse
 app.post("/add-appliance", (req, res) => {
   let room_id = req.body.room_id;
   let appliance_id = req.body.appliance_id;
-  ////console.log(room_id, appliance_id);
   let i = 0;
   sessionHouse.forEach((room) => {
     if (room.room_id == room_id) {
-      ////console.log('adding ' + appliance_id);
       sessionHouse[i].appliances.push({ appliance_id: appliance_id });
-      ////console.log('Added');
     }
     i++;
   });
+
   res.status(200).send();
 });
 
-app.get("/setups", (req, res) => {
-  fs.readdir("./setups", (err, files) => {
-    if (err) {
-      res.json();
-    } else {
-      res.json(files);
-    }
-  });
-});
-
-app.get('/setups/:setupId', (req, res) => {
-  let setupId = req.params.setupId;
-  fs.readFile('./setups/'+setupId+'.json', 'utf8', (err, data) => {
-    json = JSON.parse(data);
-    res.json(json);
-  });
-});
-
-app.get("/outputs", (req, res) => {
-  fs.readdir("./outputs", (err, files) => {
-    if (err) {
-      res.json(err);
-    } else {
-      res.json(files);
-    }
-  });
-});
-
-app.get('/getOutputJSON/:outputId', (req, res) => {
-  let outputId = req.params.outputId;
-  fs.readFile('./outputs/'+outputId+'.json', 'utf8', (err, data) => {
-    let json = JSON.parse(data);
-    res.json(json);
-  });
-  //res.status(200).send();
-});
-
+// Remove appliance from room in sessionHouse
 app.post("/remove-appliance", (req, res) => {
   let room_id = req.body.room_id;
   let appliance_id = req.body.appliance_id;
@@ -229,8 +190,8 @@ app.post("/remove-appliance", (req, res) => {
   res.redirect("/");
 });
 
+// Remove room in sessionHouse
 app.post("/remove-room", (req, res) => {
-  ////console.log(req.body);
   roomId = req.body.room_id;
   for (i = 0; i < sessionHouse.length; i++) {
     if (sessionHouse[i].room_id == roomId) {
@@ -240,72 +201,69 @@ app.post("/remove-room", (req, res) => {
   res.status(200).send();
 });
 
-app.post("/setsessionHouse", (req, res) => {
-  res.json(req.body);
-});
-
-app.post("/save", (req, res) => {
-  settings = [];
-  settings.push(req.body);
-  rooms = sessionHouse;
-  noAppliances = false;
-  rooms.forEach((room) => {
-    if (room.appliances.length == 0) {
-      noAppliances = true;
+// Get setup filenames as JSON
+app.get("/getSetups", (req, res) => {
+  fs.readdir("./setups", (err, files) => {
+    if (err) {
+      res.json();
+    } else {
+      res.json(files);
     }
   });
-  ////console.log(noAppliances);
-  if (noAppliances == true) {
-    res.json({ error: "Empty" });
-    return;
-  }
+});
+
+// Get one setup file as JSON
+app.get('/getSetup/:setupId', (req, res) => {
+  let setupId = req.params.setupId;
+  fs.readFile('./setups/'+setupId+'.json', 'utf8', (err, data) => {
+    if(err) throw err;
+    res.json(JSON.parse(data));
+  });
+});
+
+// Get output filenames as JSON 
+app.get("/getOutputs", (_, res) => {
+  fs.readdir("./outputs", (err, files) => {
+    if (err) throw err;
+    res.json(files);
+  });
+});
+
+// Save a setup file 
+app.post("/saveSetup", (req, res) => {
+  settings = [];
+  settings.push(req.body);
+
+  rooms = sessionHouse;
+
+  // -- Check if any room has no appliances 
+  rooms.forEach((room) => {
+    if (room.appliances.length == 0) res.json({"error" : "Empty"});
+  });
+
   data = [];
   data.push({ settings });
   data.push({ rooms });
-  let json = JSON.stringify(data, null, 4);
+
+  json = JSON.stringify(data, null, 4);
   fs.writeFile("./setups/" + req.body.setupId + ".json", json, (err) => {
     if (err) throw err;
-    //console.log("Wrote setup data to /setups/" + req.body.setupId + ".json!");
-    res.json({ saved: true });
+    res.status(200).send();
   });
 });
 
-app.post("/setDays", (req, res) => {
-  sessionSettings.days = req.body.newDays;
-  res.status(200).end();
-});
-
-app.post("/setWatchfulness", (req, res) => {
-  sessionSettings.watchfulness = parseFloat(req.body.newWatchfulness);
-  res.status(200).end();
-});
-
-app.post("/checkSetup", (req, res) => {
-  chkId = req.body.setupId;
-  ////console.log(chkId);
-  fs.readdir("./setups", (err, files) => {
-    match = false;
-    files.forEach((file) => {
-      if (file.split(".")[0] == chkId) {
-        match = true;
-      }
-    });
-    res.json({ setupId: chkId, exists: match });
-  });
-});
-
+// Render Results page for specific Output id (HTML) 
+// * clean up this function
 app.get("/results/:results_filename_id/:type?", (req, res) => {
   filenames = fs.readdirSync(path.join(__dirname, "outputs"));
   results_filename = req.params.results_filename_id + ".json";
   type = req.params.type;
 
-  ////console.log('results_filename: ' + results_filename);
-
   fs.readFile(
     path.join(__dirname, "outputs", results_filename),
     (err, data) => {
       if (err) {
-        dataset = []; // empty dataset because of an error
+        dataset = [];
 
         res.render("results", {
           dataset,
@@ -317,13 +275,11 @@ app.get("/results/:results_filename_id/:type?", (req, res) => {
           },
         });
       } else {
-        const json_data = JSON.parse(data);
+        json_data = JSON.parse(data);
 
-        let settings = json_data[0];
-        let rooms = json_data[1];
-
-        // you can do stuff with rooms/settings here ...
-
+        settings = json_data[0];
+        rooms = json_data[1];
+        // *do stuff with rooms here*
         if (type == "total") {
           rooms.forEach((room) => {
             room.appliances.forEach((appliance) => {
@@ -364,10 +320,12 @@ app.get("/results/:results_filename_id/:type?", (req, res) => {
   );
 });
 
+// Get Output File as JSON and sum the values
 app.get('/getOutputTotalJSON/:outputId', (req, res) => {
   let outputId = req.params.outputId;
   fs.readFile('./outputs/'+outputId+'.json', 'utf8', (err, data) => {
     //TODO
+    // - 
       let json = JSON.parse(data);
       let settings = json[0];
       let rooms = json[1];
@@ -392,108 +350,36 @@ app.get('/getOutputTotalJSON/:outputId', (req, res) => {
       let totalDataset = [];
       totalDataset.push(settings);
       totalDataset.push(rooms);
-      //console.log(totalDataset);
+      
       res.json(totalDataset);
   });
 });
 
-// without params
-app.get("/results", (req, res) => {
-  filenames = fs.readdirSync(path.join(__dirname, "outputs"));
-  filename = filenames[0]; // Choose first filename in list
-
-  fs.readFile(path.join(__dirname, "outputs", filename), (err, data) => {
-    //fs.readFile('./output_data.json', (err, data) => {
-    if (err) throw err;
-    const dataset = JSON.parse(data);
-    let foldername = path.join(__dirname, "outputs");
-    var filenames = fs.readdirSync(foldername);
-    res.render("results", {
-      dataset,
-      filenames,
-      helpers: {
-        json: function (context) {
-          return JSON.stringify(context);
-        },
-      },
-    });
-  });
-});
-
+// Run generate scripts as child processes 
+// * Does it once with 'effect', and once without
 app.get("/generate/:setupId", (req, res) => {
   let setupId = req.params.setupId;
-  if(!setupId) throw "No setupId provided.";
-  // Now we can run a script and invoke a cneil llback when complete, e.g.
-  runScript("./generateDaily.js", [setupId, true], function (err) {
-    if (err) throw err;
-    //console.log("Generate script 1 finished!");
-  });
+  if(!setupId) throw "No Setup Id provided.";
 
-  runScript("./generateDaily.js", [setupId, false], function (err) {
+  // Run and invoke a callback when complete, e.g.
+  runScript("./generate.js", [setupId, true], function (err) {
     if (err) throw err;
-    //console.log("Generate script 2 finished!");
   });
-
+  runScript("./generate.js", [setupId, false], function (err) {
+    if (err) throw err;
+  });
   res.json("Running scripts!");
 });
 
-app.get("/jsonResults(/:id)?", (req, res) => {
-  fileId = req.params.id;
-  //console.log(fileId);
-  if (!fileId) {
-    //console.log("No id");
-    fs.readdir("./outputs", (err, files) => {
-      if (err) throw err;
-      //console.log(files);
-    });
-  }
-  let json = null;
-  fs.readdir("outputs", function (err, files) {
-    if (err) throw err;
-    match = false;
-    files.forEach(function (filename) {
-      id = filename.split(".")[0];
-      if (id == fileId) {
-        match = true;
-        json = fs.readFileSync("./outputs/" + filename, "utf8");
-        json = JSON.parse(json);
-        res.json(json);
-      }
-    });
-    if (!match) {
-      res.json({ result: "no matching id" });
-    }
-  });
-});
-
-app.get("/getSetupJSON/:setupId", (req, res) => {
-  setupId = req.params.setupId;
-  fs.readFile("./setups/" + setupId + ".json", "utf8", (err, data) => {
-    if (err) {
-      res.json({err});
-    } else {
-      res.json(JSON.parse(data));
-    }
-  });
-});
-
-function getData(outputId, callback) {
-  fs.readFile("./outputs/"+outputId+".json", "utf8", (err, data) => {
-    callback(JSON.parse(data));
-  });
-}
-
+// Chunk hours -> week and output as JSON
 app.get("/weekly/:outputId", (req, res) => {
-  getData(req.params.outputId, (data) => {
+  getOutputData(req.params.outputId, (data) => {
     if(!data) { res.json({"status" : false}); }
-    ////console.log(data);
     let settings = data[0];
     let rooms = data[1];
     rooms.forEach((room) => {
       room.appliances.forEach((appliance) => {
-        ////console.log(appliance);
         let y = appliance.data[0].y;
-        ////console.log(appliance, y);
         appliance.data[0].y = y.chunk(168);
       });
       room.totalData = room.totalData[0].y.chunk(168);
@@ -502,16 +388,14 @@ app.get("/weekly/:outputId", (req, res) => {
   });
 });
 
+// Chunk hours -> weeks and output as JSON for a specific week 
 app.get("/weekly/:outputId/:weekNum", (req, res) => {
-  getData(req.params.outputId, (data) => {
-    //console.log(data);
+  getOutputData(req.params.outputId, (data) => {
     let settings = data[0];
     let rooms = data[1];
     rooms.forEach((room) => {
       room.appliances.forEach((appliance) => {
-        ////console.log(appliance);
         let y = appliance.data[0].y;
-        ////console.log(appliance, y);
         appliance.data[0].y = y.chunk(168);
       });
       room.totalData[0].y = room.totalData[0].y.chunk(168);
@@ -528,18 +412,21 @@ app.get("/weekly/:outputId/:weekNum", (req, res) => {
   });
 });
 
+// Return only the weeklyData for an Outpud ID
+// * used within Unity
 app.get("/unity/:outputId", (req, res) => {
-  getData(req.params.outputId, (data) => {
+  getOutputData(req.params.outputId, (data) => {
     let weekly = [];
-    data[1].forEach((room) => {
-      weekly.push(room["weekly"]);
-    });
+    data[1].forEach((room) => weekly.push(room["weekly"]));
     res.json(weekly);
   });
 });
 
+
+// Render weeks page (HTML) 
+// * Takes <outputID> and optional <weekNum> 
 app.get("/weeklyResults/:outputId/:weekNum?", (req, res) => {
-  getData(req.params.outputId, (data) => {
+  getOutputData(req.params.outputId, (data) => {
     let settings = data[0];
     let rooms = data[1];
     rooms.forEach((room) => {
@@ -568,6 +455,7 @@ app.get("/weeklyResults/:outputId/:weekNum?", (req, res) => {
   });
 });
 
+
 // Chunk function:
 // --------------- 
 Object.defineProperty(Array.prototype, "chunk", {
@@ -577,6 +465,15 @@ Object.defineProperty(Array.prototype, "chunk", {
       R.push(this.slice(i, i + chunkSize));
     return R;
   },
+});
+
+app.get('/unityDaily/:outputId', (req, res) => {
+  let outputId = req.params.outputId;
+  fs.readFile("./dailyOutputs/"+outputId+"_daily.json", "utf8", 
+  (err, data) => {
+    if(err) throw err;
+    res.json(JSON.parse(data));
+  });
 });
 
 // Child process runScript script:
