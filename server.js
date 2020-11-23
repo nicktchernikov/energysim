@@ -57,7 +57,7 @@ const applianceInits = require("./applianceInits.js");
 
 // Get Ooutput Data as JSON as a callback
 function getOutputData(outputId, callback) {
-  fs.readFile("./outputs/"+outputId+".json", "utf7", (err, data) => {
+  fs.readFile("./outputs/"+outputId+".json", "utf8", (err, data) => {
     callback(JSON.parse(data));
   });
 }
