@@ -80,7 +80,7 @@
           let watchfulnessInput = $('#watchfulnessInput').text();
           let daysInput = $('#daysInput').val();
           let start = Math.floor(Date.now() / 1000);
-          $.post('/save', 
+          $.post('/saveSetup', 
             {'setupId' : setupId, 
             'start' : start,
             'days' : daysInput,
@@ -97,7 +97,7 @@
             });
         });
         $('#startNewButton').click(()=>{
-          $.get('/reset');
+          $.get('/resetSession');
           let randomId = makeid(5);
           localStorage.setItem('setupId', randomId);            
           $.post('/setSessionSetupId', {'setupId' : randomId}, 
@@ -145,7 +145,7 @@
       function loadSetupFilenames() {
         // Add setup filenmames
         $('#setupFilenames').empty();
-        $.getJSON('/setups', (data) => {
+        $.getJSON('/getSetups', (data) => {
           data.forEach((setupFilename) => {
             setupFilename = setupFilename.split('.')[0];
             $('#setupFilenames').append(
@@ -155,22 +155,20 @@
         });
       }
       function loadSetupFile(setupId) {
-        $.post('/setupExists', {'setupId' : setupId}, (data) => {
+        $.post('/setupExists', {'setupId' : setupId}, (res) => {
           localStorage.setItem('setupId', setupId);
-          if(data.exists == true) {
-            $.getJSON('/setups/'+setupId, (data) => {
-              // Change sessionHouse and sessionSettings
-              $.post('/setSetupSessionWithSetupId', {'setupId' : setupId}); 
+          if(res.exists == true) {
+            $.getJSON('/getSetup/'+setupId, (res) => {
+              // Use SetupId to change sessionHouse, sessionSettings
+              $.post('/setSetupSessionWithSetupId',
+                {'setupId' : setupId }
+              ); 
             
-              // Display rooms and settings
-              let settings = data[0]["settings"][0];
-              let rooms = data[1]["rooms"];
-              displaySettings(settings);
-              displayRooms(rooms);
+              // Display the house and settings
+              displaySettings(res[0]["settings"][0]);
+              displayRooms(res[1]["rooms"]);
             })
-            .fail(()=>{ 
-              loadEmpty();
-            });           
+            .fail(()=> loadEmpty());           
         } else {
             displaySettings(sessionSettings);
             displayRooms(sessionHouse);
@@ -178,7 +176,7 @@
         });
       }
       function clearSetup() {
-        $.get('/empty');
+        $.get('/emptyHouse');
         loadEmpty();
       }
       function loadEmpty() {
@@ -269,6 +267,9 @@
         });        
         $('.ui.selection.dropdown').dropdown();     
       } 
+
+      // Helper functions: 
+      // -- Generate random id of variable length
       function makeid(length) {
         var result = '';
         var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -278,6 +279,7 @@
         }
         return result;
       }    
+
     </script>
   </head>
 

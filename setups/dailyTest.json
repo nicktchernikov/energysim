@@ -3,7 +3,7 @@
         "settings": [
             {
                 "setupId": "dailyTest",
-                "start": "1605917455",
+                "start": "1605925835",
                 "days": "28",
                 "watchfulness": "0.1"
             }
