@@ -362,10 +362,10 @@ app.get("/generate/:setupId", (req, res) => {
   if(!setupId) throw "No Setup Id provided.";
 
   // Run and invoke a callback when complete, e.g.
-  runScript("./generate.js", [setupId, true], function (err) {
+  runScript("./generateDaily.js", [setupId, true], function (err) {
     if (err) throw err;
   });
-  runScript("./generate.js", [setupId, false], function (err) {
+  runScript("./generateDaily.js", [setupId, false], function (err) {
     if (err) throw err;
   });
   res.json("Running scripts!");
@@ -415,13 +415,13 @@ app.get("/weekly/:outputId/:weekNum", (req, res) => {
 // Return only the weeklyData for an Outpud ID
 // * used within Unity
 app.get("/unity/:outputId", (req, res) => {
+  console.log("running");
   getOutputData(req.params.outputId, (data) => {
     let weekly = [];
     data[1].forEach((room) => weekly.push(room["weekly"]));
     res.json(weekly);
   });
 });
-
 
 // Render weeks page (HTML) 
 // * Takes <outputID> and optional <weekNum> 

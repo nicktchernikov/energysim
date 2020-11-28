@@ -295,8 +295,6 @@ rooms.forEach((room) => {
 // Add weekly data
 rooms.forEach((room) => {
     weekly = weeklyRoomData.filter((weekly) => room.room_id == weekly.room_id)[0];
-    weekly = weekly.length 
-    //console.log(weekly);
     room.weekly = weekly;
 });
 
