@@ -323,7 +323,7 @@ app.get("/results/:results_filename_id/:type?", (req, res) => {
 // Get Output File as JSON and sum the values
 app.get('/getOutputTotalJSON/:outputId', (req, res) => {
   let outputId = req.params.outputId;
-  fs.readFile('./outputs/'+outputId+'.json', 'utf8', (err, data) => {
+  fs.readFile('./outputs/'+outputId+'_iterative.json', 'utf8', (err, data) => {
     //TODO
     // - 
       let json = JSON.parse(data);
@@ -455,6 +455,46 @@ app.get("/weeklyResults/:outputId/:weekNum?", (req, res) => {
   });
 });
 
+app.get("/generateWeekly", (_req, res) => {
+  res.render("generateIterative");
+});
+
+app.get("/getWeeklySetup/:setupId", (req, res) => {
+  let setupId = req.params.setupId;
+  fs.readFile("./weeklySetups/"+setupId+".json", 'utf8', (err, data) => {
+    if(err) throw err;
+    res.json(data);
+  });
+}); 
+
+app.post("/generateIterative", (req, res) => {
+  let params = req.body;
+  let outputId = params.outputId; 
+  let roomGoals = params.roomGoals; 
+  
+  console.log(outputId, roomGoals);
+
+  fs.readFile("./outputs/"+outputId+"_iterative.json", 'utf8', (err, data) => {
+    console.log(data);
+  });
+
+  // we have to somehow so that after running
+  // runScript etc that it triggers its completion
+  // output the filename just written to 
+});
+
+// app.post("/getIterativeData", (req, res) => {
+//   let setupId = req.params.setupId;
+//   weeklySetup = fs.readFileSync("./weeklySetups/"+setupId+".json");
+// });
+
+// app.post("/postParamsToIterative", (req, res) => {
+//   // here we need to take the user set 
+//   // goals and past them back to 
+// });
+
+// generate next week of data based on the passed 
+// parameters ...
 
 // Chunk function:
 // --------------- 

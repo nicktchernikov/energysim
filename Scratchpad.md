@@ -40,63 +40,58 @@ Rather than generate the entire simluation at once, the following should happen:
 (5) Data for 1st week is displayed visually
 *Data includes: Rooms, Appliances, Goal, Consumption, and the Slider value
 Importantly, the slider values are displayed on the mirror object.
-(6) 
+(6)
 
------
-    IEnumerator getOutputData_old(string id, int week)
-    {
-        Destroy(GameObject.Find("rooms"));
-        foreach (Transform child in textDisplay.transform)
-        {
-            GameObject.Destroy(child.gameObject);
-        }
+ # TODO: 
 
-        string url = "http://localhost:5002/weekly/" + id + "/" + week;
+ After 1 week, we want to output daily totals for each room
+ e.g. 
+ Room 1 
+ Day 1: 1201
+ Day 2: 4214
+ Day 3: 2310
+ Day 4: 3901
+ ... and so on 
+ Room 2: 
+ Day 1: 1312
+ Day 2: 9401
+ .. you get the idea
 
-        print(url);
+ We also want to append this data to the 
+ total file 
 
-        using (UnityWebRequest webData = UnityWebRequest.Get(url))
-        {
-            yield return webData.SendWebRequest();
+ Metadata: 
+ * which appliances are on or off
+ * initial timestamp
+ * increment 
+ * agent watchfulness 
 
-            nextButton.SetActive(true);
-            prevButton.SetActive(true);
+ and then for the user to be able to click a button on the front 
+ end which generates the next weeks' data based on what goal values 
+ the user selected for the following week
 
-            JSONNode jsonData = JSON.Parse(System.Text.Encoding.UTF8.GetString(webData.downloadHandler.data));
+ Figure out how daily total values fit into this
+ Figure out how to calculate average 
+ - weekly average
+ - monthly average 
 
-            JSONNode rooms = jsonData[1];
-            GameObject parentRoomsFolder = new GameObject("rooms");
+ After a week of data generation, we want to output the following data: 
+ room1  
+ - goal
+ - consumption 
+ - slider value
+ - appliances:
+/ [ 1, 2, ... n ]
+ room 2 
+/ ...
+ room n 
 
-            weekNumberText.text = "Week " + week.ToString();
+ Along with the metadata
+ - Week number 
 
-            for (int i = 0; i < rooms.Count; i++)
-            {
-                string room_id = rooms[i]["room_id"];
-                print(room_id);
-                //GameObject roomObject = new GameObject(room_id);
-                //roomObject.transform.SetParent(parentRoomsFolder.transform);
+ # What actually needs to happen? 
 
-                // Create room id text element
-                GameObject copyRoomText = Instantiate(roomTextPrefab);
-                copyRoomText.transform.SetParent(textDisplay.transform, false);
-                copyRoomText.GetComponentInChildren<Text>().text = room_id;
+ User clicks generate and it generates only 1 week of data
+ is then prompted to provide the goal for next week 
 
-                JSONNode appliances = rooms[i]["appliances"];
-                for (int j = 0; j < appliances.Count; j++)
-                {
-                    string appliance_id = appliances[j]["appliance_id"];
-                    print(appliance_id);
-
-                    // Create appliance id text element
-                    GameObject copyApplianceText = Instantiate(applianceTextPrefab);
-                    copyApplianceText.transform.SetParent(textDisplay.transform, false);
-                    copyApplianceText.GetComponentInChildren<Text>().text = appliance_id;
-                }
-            }
-
-            table.SetActive(true);
-
-            //GameObject ngo = new GameObject("myTextGO");
-            //Text myText = ngo.AddComponent<Text>();
-        }
-    }
+Need to 

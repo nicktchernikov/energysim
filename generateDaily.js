@@ -59,23 +59,7 @@ rooms.forEach((room) => {
 let weeklyRoomData = [];
 rooms.forEach(room => weeklyRoomData.push({room_id: room.room_id, goals : [0,], totals : [0,], diffs : [0,], sliders : [0,]}));
 
-// - Create agent
-a = new Agent(watchfulness);
-
-// - Motives for which appliances are randomly turned on 
-motivesR = ['light', 'comfort', 'cleanliness', 'hygiene'];
-
-// - Apps to turn on randomly
-appsR = apps.filter(app => motivesR.includes(app.motive));
-
-// - Hunger apps
-appsH = apps.filter(app => (app.motive == 'hunger' && !app.alwaysOn));
-
-// - Boredom apps 
-appsB = apps.filter(app => (app.motive == 'boredom' && !app.alwaysOn));
-
-
-// Daily room data 
+// - Create dailyRoomData 
 let dailyRoomData = [];
 rooms.forEach(room => {
     let appliancesDaily = [];
@@ -94,6 +78,21 @@ rooms.forEach(room => {
             appliances: appliancesDaily
         });
 });
+
+// - Create agent
+a = new Agent(watchfulness);
+
+// - Motives for which appliances are randomly turned on 
+randomMotives = ['light', 'comfort', 'cleanliness', 'hygiene'];
+
+// - Apps to turn on randomly
+appsRandomMotive = apps.filter(app => randomMotives.includes(app.motive));
+
+// - Hunger apps
+appsHunger = apps.filter(app => (app.motive == 'hunger' && !app.alwaysOn));
+
+// - Boredom apps 
+appsBoredom = apps.filter(app => (app.motive == 'boredom' && !app.alwaysOn));
 
 // Debugging:
     // fs.writeFile("./test.json", JSON.stringify(dailyRoomData), "utf8", (err) => {
@@ -171,9 +170,9 @@ for(timestep = 0; timestep < timesteps; timestep++) {
             break;
           }
         }
-        // Advance week number
+        
+        // Increment week number
         weekNum++;
-        //console.log("Week Number " + weekNum + " Over" );
       }    
 
     // Agent wake up/go to sleep
@@ -203,20 +202,20 @@ for(timestep = 0; timestep < timesteps; timestep++) {
     if(a.awake) {
         // Random 
         if(Math.random() > 0.95) {
-            appsR.sort(() => Math.random() - 0.5);
-            selected = appsR.slice(0, appsR.length);
+            appsRandomMotive.sort(() => Math.random() - 0.5);
+            selected = appsRandomMotive.slice(0, appsRandomMotive.length);
             selected.forEach(s => a.changeApplianceState(s));
         }
-        appsR.forEach((app) => { if(app.timeleft == 0 & app.state == 1) a.changeApplianceState(app); });
+        appsRandomMotive.forEach((app) => { if(app.timeleft == 0 & app.state == 1) a.changeApplianceState(app); });
 
         // Hunger motivation
         if (a.hunger >= 1.0) {
             if(!a.cooking) {
-                appsH.sort(() => Math.random() - 0.5);
-                selected = appsH.slice(0, appsH.length);
+                appsHunger.sort(() => Math.random() - 0.5);
+                selected = appsHunger.slice(0, appsHunger.length);
                 selected.forEach((s) => a.changeApplianceState(s));
             } else {
-                if(appsH.every((app) => app.timeleft == 0)) {
+                if(appsHunger.every((app) => app.timeleft == 0)) {
                     //console.log("Agent has eaten.");
                     a.eat();   
                 }
@@ -226,11 +225,11 @@ for(timestep = 0; timestep < timesteps; timestep++) {
         // Boredom motivation
         if(a.boredom >= 1.0) {
             if(!a.beingEntertained) {
-                appsB.sort(() => Math.random() - 0.5);
-                selected = appsB.slice(0, appsB.length);
+                appsBoredom.sort(() => Math.random() - 0.5);
+                selected = appsBoredom.slice(0, appsBoredom.length);
                 selected.forEach((s) => a.changeApplianceState(s));
             } else {
-                if(appsB.every((app) => app.timeleft == 0)) {
+                if(appsBoredom.every((app) => app.timeleft == 0)) {
                     a.entertained();   
                 }
             }
@@ -244,10 +243,13 @@ for(timestep = 0; timestep < timesteps; timestep++) {
             if (appObj.alwaysOn == true) appObj.turnOn();
             let watts = appObj.outputWatts;
             appliance.data[0].y.push(watts);
+
             // Add watts to weekly total
             weeklyRoomData.forEach((data) => {
                 if(data.room_id == room.room_id) data.totals[weekNum] += watts;
             });
+
+            // Add watts to daily total
             dailyRoomData.forEach(data => {
                 if(data.room_id == room.room_id) {
                     data.dailyTotal[dayNum] += watts;
@@ -292,7 +294,7 @@ rooms.forEach((room) => {
     }
 });
 
-// Add weekly data
+// Add weekly data to rooms
 rooms.forEach((room) => {
     weekly = weeklyRoomData.filter((weekly) => room.room_id == weekly.room_id)[0];
     room.weekly = weekly;
@@ -309,57 +311,10 @@ fs.writeFile("./outputs/"+filename+".json", outputStr, "utf8", (err) => {
     }
 });
 
+// Write cumulative data by day
 dailyData = JSON.stringify(dailyRoomData);
 fs.writeFile("./dailyOutputs/"+filename+"_daily.json", dailyData, "utf8",
 (err, data) => {
     if(err) throw err;
     console.log("Wrote daily data to " + filename+"_daily.json");
 });
-
-// TODO: 
-
-// After 1 week, we want to output daily totals for each room
-// e.g. 
-// Room 1 
-// Day 1: 1201
-// Day 2: 4214
-// Day 3: 2310
-// Day 4: 3901
-// ... and so on 
-// Room 2: 
-// Day 1: 1312
-// Day 2: 9401
-// .. you get the idea
-
-// We also want to append this data to the 
-// total file 
-
-// Metadata: 
-// * which appliances are on or off
-// * initial timestamp
-// * increment 
-// * agent watchfulness 
-
-// and then for the user to be able to click a button on the front 
-// end which generates the next weeks' data based on what goal values 
-// the user selected for the following week
-
-// Figure out how daily total values fit into this
-// Figure out how to calculate average 
-// - weekly average
-// - monthly average 
-
-// After a week of data generation, we want to output the following data: 
-// room1  
-// - goal
-// - consumption 
-// - slider value
-// - appliances:
-/// [ 1, 2, ... n ]
-// room 2 
-/// ...
-// room n 
-
-// Along with the metadata
-// - week number 
-// - 
