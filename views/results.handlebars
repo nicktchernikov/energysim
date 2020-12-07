@@ -62,7 +62,11 @@
 
             // -- Set listeners
             $('#loadOutputFileButton').click(()=> {
-                let outputId = $('input[name="filename"]').val();
+                let filename = $('input[name="filename"]').val();
+                let outputId = filename.split('.')[0];
+
+                console.log(outputId);
+
                 $('#results').show();
                 $('#plots').html('Loading...');
                 $.get('/getOutputTotalJSON/'+outputId, (data)=>{

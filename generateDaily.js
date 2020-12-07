@@ -139,7 +139,7 @@ for(timestep = 0; timestep < timesteps; timestep++) {
           // Goal is set to 5% less than the previous week's total 
           data.diffs[weekNum] = data.totals[weekNum] - data.goals[weekNum];
           data.sliders[weekNum] = Math.min(Math.max(data.diffs[weekNum]/data.goals[weekNum], 0.0), 1.0);
-          data.goals[weekNum+1] = data.totals[weekNum] - (data.totals[weekNum] * 0.05); // set next week goal
+          data.goals[weekNum+1] = data.totals[weekNum] - (data.totals[weekNum] * 0.05); // Set next week goal
           data.totals[weekNum+1] = 0;
         });
    

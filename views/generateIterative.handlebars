@@ -37,6 +37,7 @@
 
     <style>
         td {padding: 10px;}
+        th {padding: 10px;}
     </style>
   
     <script>
@@ -66,6 +67,7 @@
             $('#loadSetupFileButton').click(()=> {
                 let filename = $('input[name="filename"]').val();
                 let setupId = filename.split('.')[0];
+                setupId = setupId + "_iterative";
                 console.log(setupId);
                 $('#setupId').html(setupId);
                 $('#loaded').show();
@@ -76,29 +78,100 @@
                 // - if there is no output file already, load
                 // the setup of rooms/appliances
 
-                $.get('/getOutputTotalJSON/'+setupId, (data)=> {
-                    let settings = data[0];
-                    weekNum = settings.weekNum; 
-                    let rooms = data[1];
-                    let html = '<table border=1><caption>'+setupId+';  week '+weekNum+'; watchfulness: '+settings.watchfulness+'</caption>';
-                    
-                    $.each(rooms, (_, room) => {
-                        html += '<tr><td>'+room.room_id+'</td>';
-                        html += '<td>total watts: '+room.weekly.totals[parseInt(room.weekly.totals.length)-1]+'</td>';
-                        total = room.weekly.totals[parseInt(room.weekly.totals.length)-1];
-                        goal = room.weekly.goals[parseInt(room.weekly.totals.length)-2];
-                        diff = total - goal;
-                        slider = Math.min(Math.max(diff/goal, 0.0), 1.0);
-                        html += '<td>slider: '+slider+'</td>';
-                        html += '<td>goal for next week: <input class="goal" id="'+room.room_id+'" type="number"></td>';
-                        html += '</tr>';
-                    });
-                    html += '</table>';
-                    $('#setupData').html(html);
+                let outputExists = false;
+                $.get('/iterativeOutputExists/'+setupId, (res) => {
+                    outputExists = res.outputExists;
+                    if(outputExists) {
+                        // Output exists
+
+                        // displayData();
+
+                        $.get('/getOutputTotalJSON/'+setupId, (data)=> {
+                            let settings = data[0];
+                            weekNum = settings.weekNum; 
+                            let rooms = data[1];
+                            let html = '<table border=1><caption>'+setupId+';  week '+weekNum+'; watchfulness: '+settings.watchfulness+'</caption>';
+                            
+                            html += '<th> room name </th>';
+                            html += '<th> total consumption </th>';
+                            html += '<th> unit </th>';
+                            html += '<th> set next week goal </th>';                           
+
+                            $.each(rooms, (_, room) => {
+                                html += '<tr><td>'+room.room_id+'</td>';
+                                html += '<td>total watts: '+room.weekly.totals[parseInt(room.weekly.totals.length)-1]+'</td>';
+                                total = parseInt(room.weekly.totals[parseInt(room.weekly.totals.length)-1]);
+                                console.log(room.weekly.goals);
+                                goal = parseInt(room.weekly.goals[parseInt(room.weekly.goals.length)-2]);
+
+                                console.log(total, goal);
+
+                                diff = total - goal;    
+                                if(total == 0 && goal == 0) {
+                                    slider = 0.0;
+                                } else { 
+                                    slider = Math.min(Math.max(diff/goal, 0.0), 1.0);
+                                }
+                                html += '<td>'+slider+'</td>';
+                                html += '<td><input class="goal" id="'+room.room_id+'" type="number"></td>';
+                                html += '</tr>';
+                            });
+                            html += '</table>';
+                            $('#setupData').html(html);
+                        });
+                    } else {
+                        // Output doesn't exist yet
+
+                        // Generate 1st week of data: 
+                        $.get("/generateIterative/"+setupId, (res) =>{
+                            if(res.done) {
+
+                                // displayData();
+
+                                $.get('/getOutputTotalJSON/'+setupId, (data)=> {
+                                    let settings = data[0];
+                                    weekNum = settings.weekNum; 
+                                    let rooms = data[1];
+                                    let html = '<table border=1><caption>'+setupId+';  week '+weekNum+'; watchfulness: '+settings.watchfulness+'</caption>';
+                                    
+                                    html += '<th> room name </th>';
+                                    html += '<th> total consumption </th>';
+                                    html += '<th> slider value </th>';
+                                    html += '<th> set next week goal </th>';                           
+
+                                    $.each(rooms, (_, room) => {
+                                        html += '<tr><td>'+room.room_id+'</td>';
+                                        html += '<td>total watts: '+room.weekly.totals[parseInt(room.weekly.totals.length)-1]+'</td>';
+                                        total = parseInt(room.weekly.totals[parseInt(room.weekly.totals.length)-1]);
+                                        console.log(room.weekly.goals);
+                                        goal = parseInt(room.weekly.goals[parseInt(room.weekly.goals.length)-2]);
+
+                                        console.log(total, goal);
+
+                                        diff = total - goal;    
+                                        if(total == 0 && goal == 0) {
+                                            slider = 0.0;
+                                        } else { 
+                                            slider = Math.min(Math.max(diff/goal, 0.0), 1.0);
+                                        }
+                                        html += '<td>'+slider+'</td>';
+                                        html += '<td><input class="goal" id="'+room.room_id+'" type="number"></td>';
+                                        html += '</tr>';
+                                    });
+    
+
+                                    html += '</table>';
+                                    $('#setupData').html(html);
+                                });
+                            }
+                        });
+                    }
                 });
+            
             });
             $('#generateButton').click(()=> {
-                let setupId = $('#setupId').text();
+
+
                 $('#generateMessage').hide();
                 $('#loading').show();
 
@@ -113,15 +186,50 @@
                         });
                     }
                 });
-
-                params = {"outputId" : setupId, "roomGoals" : roomGoals};
-
-                console.log(params);
-
-                $.post('/generateIterative', {params: params}, () => {
-                    $('#loading').show();
+                
+                let setupId = $('#setupId').text();
+                $.post('/generateIterative', {"outputId" : setupId, "roomGoals" : JSON.stringify(roomGoals)}, (res) => {
+                    $('#loading').hide();
                 })
                 .done(function() {
+
+                    // displayData();
+
+                    $.get('/getOutputTotalJSON/'+setupId, (data)=> {
+                        let settings = data[0];
+                        weekNum = settings.weekNum; 
+                        let rooms = data[1];
+                        let html = '<table border=1><caption>'+setupId+';  week '+weekNum+'; watchfulness: '+settings.watchfulness+'</caption>';
+                        
+                        html += '<th> room name </th>';
+                        html += '<th> total consumption </th>';
+                        html += '<th> slider value </th>';
+                        html += '<th> set next week goal </th>';                           
+
+                        $.each(rooms, (_, room) => {
+                            html += '<tr><td>'+room.room_id+'</td>';
+                            html += '<td>total watts: '+room.weekly.totals[parseInt(room.weekly.totals.length)-1]+'</td>';
+                            total = parseInt(room.weekly.totals[parseInt(room.weekly.totals.length)-1]);
+                            console.log(room.weekly.goals);
+                            goal = parseInt(room.weekly.goals[parseInt(room.weekly.goals.length)-2]);
+
+                            console.log(total, goal);
+
+                            diff = total - goal;    
+                            if(total == 0 && goal == 0) {
+                                slider = 0.0;
+                            } else { 
+                                slider = Math.min(Math.max(diff/goal, 0.0), 1.0);
+                            }
+                            html += '<td>'+slider+'</td>';
+                            html += '<td><input class="goal" id="'+room.room_id+'" type="number"></td>';
+                            html += '</tr>';
+                        });
+
+                        html += '</table>';
+                        $('#setupData').html(html);
+                    });
+
                    $('#loading').hide();
                 });
             });
@@ -182,7 +290,7 @@
                     </div>
 
                     <br />
-                    <div class="ui blue button" id="generateButton" >Next Week</div>
+                    <div class="ui blue button" id="generateButton" >Generate Next Week</div>
                     <br/>
                     <div id="loading" style="margin-top: 10px;">Generating...</div>
                     

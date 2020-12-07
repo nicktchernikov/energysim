@@ -22,7 +22,9 @@ function iterativeOutputExists(setupId) {
 //setupId = process.argv[2];
 //if(!setupId) throw "No setup ID.";
 
-let setupId = "bgpPg";
+let setupId = process.argv[2];
+
+console.log("Setup ID = " + setupId);
 
 // - House rooms and settings
 var setup;
@@ -31,26 +33,65 @@ var rooms;
 
 var initial = false;
 try {
-    setup = JSON.parse(fs.readFileSync("./outputs/"+setupId+"_iterative.json"));
+    setup = JSON.parse(fs.readFileSync("./outputs/"+setupId+".json"));
     settings = setup[0];
     settings.start = setup[0].nextWeek.start;
     settings.watchfulness = setup[0].nextWeek.watchfulness;
     settings.weekNum = parseInt(settings.weekNum) + 1;
     rooms = setup[1];
 } catch (err) {
-    setup = JSON.parse(fs.readFileSync("./setups/" + setupId + ".json"));
+    setupFilename = setupId.split("_iterative")[0];
+    console.log("setupFilename =" + setupFilename);
+    setup = JSON.parse(fs.readFileSync("./setups/" + setupFilename + ".json"));
     settings = setup[0].settings[0];
     settings.weekNum = 0;
     rooms = setup[1].rooms;
-    initial = true;
+    initial = true;  
+}
+
+if(!initial) {
+    // Change watchfulness with goal values
+    let adjustWatchfulness = false;
+    for(i = 0; i < rooms.length; i++) {
+        room = rooms[i];
+        last_goal = parseInt(room.weekly.goals[room.weekly.goals.length-1]);
+        last_total = parseInt(room.weekly.totals[room.weekly.totals.length-1]);
+
+        console.log(last_goal, last_total);
+
+        if(last_goal < last_total) {
+            adjustWatchfulness = true;
+            break;
+        }
+    }
+    console.log("adjustWatchfulness = " + adjustWatchfulness);
+
+    if(adjustWatchfulness) {
+        // - Agent
+        let watchfulness = parseFloat(settings.watchfulness);
+        // - Create agent
+        a = new Agent(watchfulness);
+        console.log("true");
+        a.watchfulness += 0.1;
+        console.log("increasing watchfulness by 0.1");
+        a.watchfulness = Math.min(a.watchfulness, 1.0);
+        console.log("watchfulness = " + a.watchfulness);
+    } else {
+        // - Agent
+        let watchfulness = parseFloat(settings.watchfulness);
+        // - Create agent
+        a = new Agent(watchfulness);
+    }
+} else {
+    // - Agent
+    let watchfulness = parseFloat(settings.watchfulness);
+    // - Create agent
+    a = new Agent(watchfulness);
 }
 
 initial ? console.log("--- using initial setup JSON file ---") : console.log("--- using existing output file ---");
 
 console.log(settings);
-
-// - Agent
-let watchfulness = parseFloat(settings.watchfulness);
 
 // - Simulation
 let timestamp = parseInt(settings.start);
@@ -139,6 +180,7 @@ try {
 } catch (err) {
     // Create new
     dailyRoomData = [];
+
     rooms.forEach(room => {
         let appliancesDaily = [];
         room.appliances.forEach(appliance => {
@@ -158,8 +200,7 @@ try {
     });
 }
 
-// - Create agent
-a = new Agent(watchfulness);
+
 
 // - Motives for which appliances are randomly turned on 
 randomMotives = ['light', 'comfort', 'cleanliness', 'hygiene'];
@@ -339,8 +380,9 @@ rooms.forEach(room => {
 // Prepare next week's setup settings
 let nextWeek = {
     "start": timestamp,
-    "watchfulness": settings.watchfulness // Will change
+    "watchfulness": a.watchfulness // Will change
 };
+settings.watchfulness = a.watchfulness;
 settings.nextWeek = nextWeek;
 
 // Condense all appliance y data 15-minute datapoints to 1 hour data points
@@ -360,7 +402,7 @@ for(j = 0; j < applianceDataPoints.length; j++) {
     applianceDataPoints[j][key] = condensed;
 }
 
-console.log(applianceDataPoints);
+//console.log(applianceDataPoints);
 
 rooms.forEach((room) => {
     room.appliances.forEach((appliance) => {
@@ -402,17 +444,17 @@ output.push(rooms);
 
 // Write data
 outputString = JSON.stringify(output);
-fs.writeFile("./outputs/"+setupId+"_iterative.json", outputString, "utf8", (err) => {
+fs.writeFile("./outputs/"+setupId+".json", outputString, "utf8", (err) => {
     if(err) { 
         throw err;
     } else {
-        console.log("Wrote output to /outputs folder. Filename: " + setupId + "_iterative.json");
+        console.log("Wrote output to /outputs folder. Filename: " + setupId + ".json");
     }
 });
 
 // Write cumulative data by day
 dailyRoomDataString = JSON.stringify(dailyRoomData);
-fs.writeFile("./dailyOutputs/"+setupId+"_iterative.json", dailyRoomDataString, "utf8",(err, _) => {
+fs.writeFile("./dailyOutputs/"+setupId+".json", dailyRoomDataString, "utf8",(err, _) => {
     if(err) throw err;
-    console.log("Wrote daily data to " + setupId +"_daily.json");
+    console.log("Wrote daily data to " + setupId +".json");
 });

@@ -28,6 +28,7 @@ app.get('/generate', (_, res) => res.render('generate'));
 
 // Render Results page (HTML)
 app.get("/results", (req, res) => {
+  console.log(req.params.test);
   filenames = fs.readdirSync(path.join(__dirname, "outputs"));
   filename = filenames[0]; // Choose first filename in list
 
@@ -229,6 +230,12 @@ app.get("/getOutputs", (_, res) => {
   });
 });
 
+// Check that an iterative output exists already
+app.get("/iterativeOutputExists/:setupId", (req, res) => {
+  let exists = fs.existsSync("./outputs/"+req.params.setupId+".json"); 
+  res.json({"outputExists" : exists});
+});
+
 // Save a setup file 
 app.post("/saveSetup", (req, res) => {
   settings = [];
@@ -323,7 +330,7 @@ app.get("/results/:results_filename_id/:type?", (req, res) => {
 // Get Output File as JSON and sum the values
 app.get('/getOutputTotalJSON/:outputId', (req, res) => {
   let outputId = req.params.outputId;
-  fs.readFile('./outputs/'+outputId+'_iterative.json', 'utf8', (err, data) => {
+  fs.readFile('./outputs/'+outputId+'.json', 'utf8', (err, data) => {
     //TODO
     // - 
       let json = JSON.parse(data);
@@ -369,6 +376,22 @@ app.get("/generate/:setupId", (req, res) => {
     if (err) throw err;
   });
   res.json("Running scripts!");
+});
+
+app.get("/generateIterative/:setupId", (req, res) =>{
+  let setupId = req.params.setupId;
+  if(!setupId) throw "No Setup Id provided.";
+
+  // Run and invoke a callback when complete, e.g.
+  runScript("./generateIterative.js", [setupId], function (err) {
+
+    if (err) {
+      res.json({"done" : false});
+      throw err;
+    } else {
+      res.json({"done" : true});
+    }
+  });
 });
 
 // Chunk hours -> week and output as JSON
@@ -468,19 +491,41 @@ app.get("/getWeeklySetup/:setupId", (req, res) => {
 }); 
 
 app.post("/generateIterative", (req, res) => {
-  let params = req.body;
-  let outputId = params.outputId; 
-  let roomGoals = params.roomGoals; 
-  
-  console.log(outputId, roomGoals);
 
-  fs.readFile("./outputs/"+outputId+"_iterative.json", 'utf8', (err, data) => {
-    console.log(data);
+  console.log(req.body);
+  let outputId = req.body.outputId;
+  let roomGoals = JSON.parse(req.body.roomGoals);
+
+  // Change goals
+  fs.readFile("./outputs/"+outputId+".json", 'utf8', (err, data) => {
+    let sim = JSON.parse(data);
+    let rooms = sim[1];
+    
+    if(roomGoals.length > 0) { 
+      rooms.forEach((room) => {
+        roomGoalObj = roomGoals.filter(roomGoal => room.room_id == roomGoal.room_id)[0];
+        room.weekly.goals[room.weekly.goals.length-1] = parseInt(roomGoalObj.goal);
+      });
+    }
+    fs.writeFile("./outputs/"+outputId+".json", JSON.stringify(sim),
+    (err, data) => {
+      if(err) throw err;
+      if(roomGoals.length > 0) { 
+        console.log("Wrote new goals!");
+      }
+    });
+
   });
 
-  // we have to somehow so that after running
-  // runScript etc that it triggers its completion
-  // output the filename just written to 
+  runScript("./generateIterative.js", [outputId], function(err) {
+    if(err) {
+      res.json({"done" : false})
+      throw err;
+    } else {
+      res.json({"done" : true});
+    }
+  });
+
 });
 
 // app.post("/getIterativeData", (req, res) => {
@@ -519,6 +564,7 @@ app.get('/unityDaily/:outputId', (req, res) => {
 // Child process runScript script:
 // -------------------------------
 var childProcess = require("child_process");
+const { UV_FS_O_FILEMAP } = require("constants");
 function runScript(scriptPath, child_argv, callback) {
   // keep track of whether callback has been invoked to prevent multiple invocations
   var invoked = false;
