@@ -267,9 +267,6 @@ for(timestep = 0; timestep < timesteps; timestep++) {
     timestamp += (15*60);
 }
 
-fs.writeFile("./test.json", JSON.stringify(dailyRoomData), "utf8", (err) => {
-    if(err) throw err;
-});
 
 // Finish 
 // -----

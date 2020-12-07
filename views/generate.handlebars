@@ -34,64 +34,6 @@
       type="text/css",
       href="./css/styles.css"
       />
-  
-    <script>
-        // Get appliance types
-        let applianceTypes = [];
-        $.getJSON('/applianceInits', (data) => {
-            $.each(data, (key, val) => {
-                applianceTypes.push(val.type);
-            });
-        });
-
-        // Get room types 
-        let roomTypes = [
-            'bathroom', 'laundry room', 'bedroom', 
-            'living room', 'kitchen', 'basement'
-        ];
-
-        // DOM loaded
-        $(document).ready(() => {
-            // Activate UI elements
-            activateUI();
-
-            // Load setup filenames into dropdown
-            loadSetupFilenames();
-
-            // Set listeners
-            $('#loadSetupFileButton').click(()=> {
-                let filename = $('input[name="filename"]').val();
-                let setupId = filename.split('.')[0];
-                $('#setupId').html(setupId);
-                $('#loaded').show();
-            });
-            $('#generateButton').click(()=>{
-                let setupId = $('#setupId').text();
-                $('#generateMessage').hide();
-                $('#loading').show();
-                $.get('/generate/'+setupId, ()=> {
-                    $('#loading').delay(1500).fadeOut(500, () => {
-                        $('#generateMessage').fadeIn(500);
-                    });
-                });
-            });
-        });
-
-        // Functions
-        function activateUI() {
-            $('.ui.selection.dropdown').dropdown();
-        }
-        function loadSetupFilenames() {
-            $.getJSON('/getSetups', (data) => {
-                data.forEach((setupFilename) => {
-                    setupFilename = setupFilename.split('.')[0];
-                    $('#setupFilenames').append(
-                        '<div class="item" data-value="'+setupFilename+'">'+setupFilename+'</div>'
-                    );
-                });
-            });
-        }
-    </script>
 </head>
 
   <body id="root">
@@ -141,5 +83,62 @@
 
     </div> <!-- /end main -->
 
-  </body>
+        <script>
+            // Get appliance types
+            let applianceTypes = [];
+            $.getJSON('/applianceInits', (data) => {
+                $.each(data, (key, val) => {
+                    applianceTypes.push(val.type);
+                });
+            });
+
+            // Get room types 
+            let roomTypes = [
+                'bathroom', 'laundry room', 'bedroom', 
+                'living room', 'kitchen', 'basement'
+            ];
+
+            // DOM loaded
+            $(document).ready(() => {
+                // Activate UI elements
+                activateUI();
+
+                // Load setup filenames into dropdown
+                loadSetupFilenames();
+
+                // Set listeners
+                $('#loadSetupFileButton').click(()=> {
+                    let filename = $('input[name="filename"]').val();
+                    let setupId = filename.split('.')[0];
+                    $('#setupId').html(setupId);
+                    $('#loaded').show();
+                });
+                $('#generateButton').click(()=>{
+                    let setupId = $('#setupId').text();
+                    $('#generateMessage').hide();
+                    $('#loading').show();
+                    $.get('/generate/'+setupId, ()=> {
+                        $('#loading').delay(1500).fadeOut(500, () => {
+                            $('#generateMessage').fadeIn(500);
+                        });
+                    });
+                });
+            });
+
+            // Functions
+            function activateUI() {
+                $('.ui.selection.dropdown').dropdown();
+            }
+            function loadSetupFilenames() {
+                $.getJSON('/getSetups', (data) => {
+                    data.forEach((setupFilename) => {
+                        setupFilename = setupFilename.split('.')[0];
+                        $('#setupFilenames').append(
+                            '<div class="item" data-value="'+setupFilename+'">'+setupFilename+'</div>'
+                        );
+                    });
+                });
+            }
+        </script>
+    </body>
 </html>

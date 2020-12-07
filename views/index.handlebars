@@ -35,6 +35,199 @@
       href="./css/styles.css"
       />
   
+
+  </head>
+
+  <body id="root">
+    <div class="ui top fixed inverted menu">
+      <div class="ui container">
+        <a class="header item title" href="/">
+            EnergySim
+        </a>
+        <a class="item" href="/">Setup</a>
+        <a class="item" href="/generate">Generate</a>
+        <a class="item" href="/results">Results</a>
+        <!-- <div class="ui simple dropdown item">
+          Dropdown <i class="dropdown icon"></i>
+          <div class="menu">
+            <a class="item" href="#root">Link Item</a>
+            <a class="item" href="#root">Link Item</a>
+            <div class="divider"></div>
+            <div class="header">Header Item</div>
+            <div class="item">
+              Sub Menu 
+              <div class="menu">
+                <a class="item" href="#root">Link Item</a>
+                <a class="item" href="#root">Link Item</a>
+              </div>
+            </div>
+            <a class="item" href="#root">Link Item</a>
+          </div>
+        </div> -->
+      </div>
+    </div>
+
+    <div class="ui main text container">
+
+      <!-- Load Setup -->
+      <div class="ui segment">   
+          <h1 class="ui header">Load Setup</h1>
+          <div class="ui selection dropdown">
+              <input type="hidden" name="filename">
+              <i class="dropdown icon"></i>
+              <div class="default text">Choose filename</div>
+              <div class="menu" id="setupFilenames">
+              </div>
+            </div>
+            <div class="ui blue button" id="loadSetupFile">Load</div>
+            <div class="ui horizontal divider">
+              or
+            </div>  
+          <h1 class="ui header">Edit Setup</h1>
+          <!-- <p>This is where a user will be able to add rooms and put appliances into them at will</p>  -->
+
+        <!-- Setup/Clear -->
+        <div class="ui grid">
+          <div class="column">
+            <div class="saveButton ui blue button center">Save</div>
+            <div class="clearButton ui blue basic button center">Clear</div>
+          </div>
+        </div>
+
+        <!-- Settings --> 
+        <h2> Settings </h2>
+
+        <div class="ui form"> 
+          <div class="inline field">
+            <label> Setup ID </label>
+            <div class="ui button" id="setupId">None</div>
+            <div class="ui grid" style="margin: 2px;">              
+          </div>
+        </div>
+
+        <div class="ui grid padded celled">
+
+          <div class="two column row">
+
+            <div class="column">
+              <div class="ui basic button" id="randomButton">Set Random Setup ID</div>
+              <div class="ui basic button" id="startNewButton">Start New Setup</div>
+            </div>
+
+            <div class="column">
+              <div class="ui form">
+                <div class="inline field">
+                  <label>Custom Setup ID</label>
+                  <input type="text" id="customSetupId">
+                  <div class="ui basic button" id="setCustomId"> Set </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="two column row">
+            <div class="column">
+              <div class="ui form">
+                <div class="inline field">
+                  <label>Agent Watchfulness</label>
+                  <div class="ui range" id="watchfulnessRange" style="width: 300px;"></div>
+                    Value :&nbsp; 
+                    <span id="watchfulnessInput"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="column">
+              <div class="ui form">
+                <div class="field">
+                  <label>Days</label>
+                  <input id="daysInput" type="number" min="1" max="1000">
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+          <!-- Rooms/Appliances --> 
+          <h2> Rooms and Appliances </h2>
+
+          <div class="ui selection dropdown">
+              <input type="hidden" name="room">
+              <i class="dropdown icon"></i>
+              <div class="default text">Choose room</div>
+              <div class="menu" id="roomDropdown">
+                <!-- Room dropdown -->
+              </div>
+          </div>
+          <div class="ui button" id="addRoomButton">Add</div>
+          
+          <br /><br />
+
+          <div class="rooms ui two column grid">
+            <!-- Rooms -->
+          </div>
+        
+        <!-- Save/Clear Buttons -->
+        <div class="ui grid">
+          <div class="column">
+            <div class="saveButton ui blue button center">Save</div>
+            <div class="clearButton ui blue basic button center">Clear</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+    <!-- <div class="ui inverted vertical footer segment">
+      <div class="ui center aligned container">
+        <div class="ui stackable inverted divided grid">
+          <div class="three wide column">
+            <h4 class="ui inverted header">Group 1</h4>
+            <div class="ui inverted link list">
+              <a class="item" href="#root">Link One</a>
+              <a class="item" href="#root">Link Two</a>
+              <a class="item" href="#root">Link Three</a>
+              <a class="item" href="#root">Link Four</a>
+            </div>
+          </div>
+          <div class="three wide column">
+            <h4 class="ui inverted header">Group 2</h4>
+            <div class="ui inverted link list">
+              <a class="item" href="#root">Link One</a>
+              <a class="item" href="#root">Link Two</a>
+              <a class="item" href="#root">Link Three</a>
+              <a class="item" href="#root">Link Four</a>
+            </div>
+          </div>
+          <div class="three wide column">
+            <h4 class="ui inverted header">Group 3</h4>
+            <div class="ui inverted link list">
+              <a class="item" href="#root">Link One</a>
+              <a class="item" href="#root">Link Two</a>
+              <a class="item" href="#root">Link Three</a>
+              <a class="item" href="#root">Link Four</a>
+            </div>
+          </div>
+          <div class="seven wide column">
+            <h4 class="ui inverted header">Footer Header</h4>
+            <p>
+              Extra space for a call to action inside the footer that could help
+              re-engage users.
+            </p>
+          </div>
+        </div>
+        <div class="ui inverted section divider"></div>
+        <img class="ui centered mini image" src="./static/images/logo.png" />
+        <div class="ui horizontal inverted small divided link list">
+          <a class="item" href="#root">Site Map</a>
+          <a class="item" href="#root">Contact Us</a>
+          <a class="item" href="#root">Terms and Conditions</a>
+          <a class="item" href="#root">Privacy Policy</a>
+        </div>
+      </div>
+    </div> -->
     <script>
       let sessionHouse = {{{json sessionHouse}}};
       let sessionSettings = {{{json sessionSettings}}};
@@ -281,197 +474,6 @@
       }    
 
     </script>
-  </head>
 
-  <body id="root">
-    <div class="ui top fixed inverted menu">
-      <div class="ui container">
-        <a class="header item title" href="/">
-            EnergySim
-        </a>
-        <a class="item" href="/">Setup</a>
-        <a class="item" href="/generate">Generate</a>
-        <a class="item" href="/results">Results</a>
-        <!-- <div class="ui simple dropdown item">
-          Dropdown <i class="dropdown icon"></i>
-          <div class="menu">
-            <a class="item" href="#root">Link Item</a>
-            <a class="item" href="#root">Link Item</a>
-            <div class="divider"></div>
-            <div class="header">Header Item</div>
-            <div class="item">
-              Sub Menu 
-              <div class="menu">
-                <a class="item" href="#root">Link Item</a>
-                <a class="item" href="#root">Link Item</a>
-              </div>
-            </div>
-            <a class="item" href="#root">Link Item</a>
-          </div>
-        </div> -->
-      </div>
-    </div>
-
-    <div class="ui main text container">
-
-      <!-- Load Setup -->
-      <div class="ui segment">   
-          <h1 class="ui header">Load Setup</h1>
-          <div class="ui selection dropdown">
-              <input type="hidden" name="filename">
-              <i class="dropdown icon"></i>
-              <div class="default text">Choose filename</div>
-              <div class="menu" id="setupFilenames">
-              </div>
-            </div>
-            <div class="ui blue button" id="loadSetupFile">Load</div>
-            <div class="ui horizontal divider">
-              or
-            </div>  
-          <h1 class="ui header">Edit Setup</h1>
-          <!-- <p>This is where a user will be able to add rooms and put appliances into them at will</p>  -->
-
-        <!-- Setup/Clear -->
-        <div class="ui grid">
-          <div class="column">
-            <div class="saveButton ui blue button center">Save</div>
-            <div class="clearButton ui blue basic button center">Clear</div>
-          </div>
-        </div>
-
-        <!-- Settings --> 
-        <h2> Settings </h2>
-
-        <div class="ui form"> 
-          <div class="inline field">
-            <label> Setup ID </label>
-            <div class="ui button" id="setupId">None</div>
-            <div class="ui grid" style="margin: 2px;">              
-          </div>
-        </div>
-
-        <div class="ui grid padded celled">
-
-          <div class="two column row">
-
-            <div class="column">
-              <div class="ui basic button" id="randomButton">Set Random Setup ID</div>
-              <div class="ui basic button" id="startNewButton">Start New Setup</div>
-            </div>
-
-            <div class="column">
-              <div class="ui form">
-                <div class="inline field">
-                  <label>Custom Setup ID</label>
-                  <input type="text" id="customSetupId">
-                  <div class="ui basic button" id="setCustomId"> Set </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="two column row">
-            <div class="column">
-              <div class="ui form">
-                <div class="inline field">
-                  <label>Agent Watchfulness</label>
-                  <div class="ui range" id="watchfulnessRange" style="width: 300px;"></div>
-                    Value :&nbsp; 
-                    <span id="watchfulnessInput"></span>
-                </div>
-              </div>
-            </div>
-
-            <div class="column">
-              <div class="ui form">
-                <div class="field">
-                  <label>Days</label>
-                  <input id="daysInput" type="number" min="1" max="1000">
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-
-          <!-- Rooms/Appliances --> 
-          <h2> Rooms and Appliances </h2>
-
-          <div class="ui selection dropdown">
-              <input type="hidden" name="room">
-              <i class="dropdown icon"></i>
-              <div class="default text">Choose room</div>
-              <div class="menu" id="roomDropdown">
-                <!-- Room dropdown -->
-              </div>
-          </div>
-          <div class="ui button" id="addRoomButton">Add</div>
-          
-          <br /><br />
-
-          <div class="rooms ui two column grid">
-            <!-- Rooms -->
-          </div>
-        
-        <!-- Save/Clear Buttons -->
-        <div class="ui grid">
-          <div class="column">
-            <div class="saveButton ui blue button center">Save</div>
-            <div class="clearButton ui blue basic button center">Clear</div>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-    <!-- <div class="ui inverted vertical footer segment">
-      <div class="ui center aligned container">
-        <div class="ui stackable inverted divided grid">
-          <div class="three wide column">
-            <h4 class="ui inverted header">Group 1</h4>
-            <div class="ui inverted link list">
-              <a class="item" href="#root">Link One</a>
-              <a class="item" href="#root">Link Two</a>
-              <a class="item" href="#root">Link Three</a>
-              <a class="item" href="#root">Link Four</a>
-            </div>
-          </div>
-          <div class="three wide column">
-            <h4 class="ui inverted header">Group 2</h4>
-            <div class="ui inverted link list">
-              <a class="item" href="#root">Link One</a>
-              <a class="item" href="#root">Link Two</a>
-              <a class="item" href="#root">Link Three</a>
-              <a class="item" href="#root">Link Four</a>
-            </div>
-          </div>
-          <div class="three wide column">
-            <h4 class="ui inverted header">Group 3</h4>
-            <div class="ui inverted link list">
-              <a class="item" href="#root">Link One</a>
-              <a class="item" href="#root">Link Two</a>
-              <a class="item" href="#root">Link Three</a>
-              <a class="item" href="#root">Link Four</a>
-            </div>
-          </div>
-          <div class="seven wide column">
-            <h4 class="ui inverted header">Footer Header</h4>
-            <p>
-              Extra space for a call to action inside the footer that could help
-              re-engage users.
-            </p>
-          </div>
-        </div>
-        <div class="ui inverted section divider"></div>
-        <img class="ui centered mini image" src="./static/images/logo.png" />
-        <div class="ui horizontal inverted small divided link list">
-          <a class="item" href="#root">Site Map</a>
-          <a class="item" href="#root">Contact Us</a>
-          <a class="item" href="#root">Terms and Conditions</a>
-          <a class="item" href="#root">Privacy Policy</a>
-        </div>
-      </div>
-    </div> -->
   </body>
 </html>

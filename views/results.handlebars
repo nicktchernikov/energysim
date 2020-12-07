@@ -35,8 +35,40 @@
       type="text/css",
       href="./css/styles.css"
       />
+</head>
 
-  
+  <body id="root">
+    <div class="ui top fixed inverted menu">
+      <div class="ui container">
+        <a class="header item title" href="/">
+            EnergySim
+        </a>
+        <a class="item" href="/">Setup</a>
+        <a class="item" href="/generate">Generate</a>
+        <a class="item" href="/results">Results</a>
+      </div>
+    </div>
+
+    <div class="ui main text container">
+        <div class="ui segment"> 
+            <!-- load setup filename dropdown -->
+            <h1 class="ui header">Load Output File</h1>
+            <div class="ui selection dropdown">
+                <input type="hidden" name="filename">
+                <i class="dropdown icon"></i>
+                <div class="default text">Choose filename</div>
+                <div class="menu" id="outputFilenames"></div>
+            </div>
+            <div class="ui blue button" id="loadOutputFileButton">Load</div>
+            <!-- /end setup filename dropdown -->
+        </div> <!-- /end segment -->
+
+        <div id='results' class="ui segment"> 
+             <div id="plots"></div>
+        </div>
+
+    </div> <!-- /end main -->
+
     <script>
         // Get appliance types
         let applianceTypes = [];
@@ -110,39 +142,6 @@
             });
         }
     </script>
-</head>
-
-  <body id="root">
-    <div class="ui top fixed inverted menu">
-      <div class="ui container">
-        <a class="header item title" href="/">
-            EnergySim
-        </a>
-        <a class="item" href="/">Setup</a>
-        <a class="item" href="/generate">Generate</a>
-        <a class="item" href="/results">Results</a>
-      </div>
-    </div>
-
-    <div class="ui main text container">
-        <div class="ui segment"> 
-            <!-- load setup filename dropdown -->
-            <h1 class="ui header">Load Output File</h1>
-            <div class="ui selection dropdown">
-                <input type="hidden" name="filename">
-                <i class="dropdown icon"></i>
-                <div class="default text">Choose filename</div>
-                <div class="menu" id="outputFilenames"></div>
-            </div>
-            <div class="ui blue button" id="loadOutputFileButton">Load</div>
-            <!-- /end setup filename dropdown -->
-        </div> <!-- /end segment -->
-
-        <div id='results' class="ui segment"> 
-             <div id="plots"></div>
-        </div>
-
-    </div> <!-- /end main -->
 
   </body>
 </html>
