@@ -72,7 +72,7 @@ if(!initial) {
         // - Create agent
         a = new Agent(watchfulness);
         console.log("true");
-        a.watchfulness += 0.1;
+        a.watchfulness += 0.02;
         console.log("increasing watchfulness by 0.1");
         a.watchfulness = Math.min(a.watchfulness, 1.0);
         console.log("watchfulness = " + a.watchfulness);
@@ -331,8 +331,6 @@ for(timestep = 0; timestep < timesteps; timestep++) {
             datapoints = applianceDataPoints.filter(obj => obj.hasOwnProperty(appliance.appliance_id))[0];
             datapoints[appliance.appliance_id].push(watts);
 
-
-
             //appliance.data[0].y.push(watts);
             //console.log("pushed " + watts + " to y");
             //console.log("count: " + appliance.data[0].y.length);
@@ -363,7 +361,6 @@ for(timestep = 0; timestep < timesteps; timestep++) {
 }
 // ------
 // End Simulation Loop
-
 
 // Set endState for appliances
 rooms.forEach(room => {

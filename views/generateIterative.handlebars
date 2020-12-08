@@ -19,8 +19,7 @@
                         <span id="setupId" style="font-weight: bold;"></span> loaded
                     </div>
 
-                    <div id="setupData">
-                    </div>
+                    <div id="setupData"></div>
 
                     <br />
                     <div class="ui blue button" id="generateButton" >Generate Next Week</div>
@@ -74,14 +73,14 @@
                     outputExists = res.outputExists;
                     if(outputExists) {
                         // Output exists
-                        displayData(setupId);
+                        displayDataTable(setupId);
                     } else {
                         // Output doesn't exist yet
 
                         // Generate 1st week of data and display it: 
                         $.get("/generateIterative/"+setupId, (res) =>{
                             if(res.done) {
-                                displayData(setupId);
+                                displayDataTable(setupId);
                             }
                         });
                     }
@@ -115,7 +114,7 @@
                     $('#loading').hide();
                 })
                 .done(function() {
-                    displayData(setupId);
+                    displayDataTable(setupId);
                     $('#loading').hide();
                 });
             });
@@ -135,24 +134,27 @@
                 });
             });
         }
-        function displayData(setupId) {
+        function displayDataTable(setupId) {
             $.get('/getOutputTotalJSON/'+setupId, (data)=> {
                 let settings = data[0];
                 weekNum = settings.weekNum; 
                 let rooms = data[1];
                 let html = '<table border=1><caption>'+setupId+';  week '+weekNum+'; watchfulness: '+settings.watchfulness+'</caption>';
                 
-                html += '<th> room name </th>';
-                html += '<th> total consumption </th>';
+                html += '<th> room </th>';
+                html += '<th> consumption </th>';
+                html += '<th> goal </th>';
                 html += '<th> unit </th>';
-                html += '<th> set next week goal </th>';                           
-
+                html += '<th> next week goal </th>';
+                html += '<td> goal by %</td>';
+                        
                 $.each(rooms, (_, room) => {
-                    html += '<tr><td>'+room.room_id+'</td>';
-                    html += '<td>'+room.weekly.totals[parseInt(room.weekly.totals.length)-1]+'</td>';
+                    html += '<tr class="'+room.room_id+'"><td class="room_id">'+room.room_id+'</td>';
+                    html += '<td class="consumption">'+room.weekly.totals[parseInt(room.weekly.totals.length)-1]+'</td>';
                     total = parseInt(room.weekly.totals[parseInt(room.weekly.totals.length)-1]);
                     console.log(room.weekly.goals);
                     goal = parseInt(room.weekly.goals[parseInt(room.weekly.goals.length)-2]);
+                    html += '<td>'+goal+'</td>';
 
                     console.log(total, goal);
 
@@ -160,15 +162,29 @@
                     if(total == 0 && goal == 0) {
                         slider = 0.0;
                     } else { 
-                        slider = Math.min(Math.max(diff/goal, 0.0), 1.0);
+                        slider = Math.min(Math.max(diff/goal, 0.0), 1.0).toFixed(2);
                     }
                     html += '<td>'+slider+'</td>';
-                    html += '<td><input class="goal" id="'+room.room_id+'" type="number"></td>';
+                    html += '<td><input class="goal" id="'+room.room_id+'" type="number" style="width: 100px;" value="'+total+'"></td>';
+                    
+                    html += '<td><input class="goalPercentage" id="'+room.room_id+'" type="number" min="0" max="100" value="100"></td>';
+
                     html += '</tr>';
                 });
                 html += '</table>';
 
                 $('#setupData').html(html);
+                                
+                $('.goalPercentage').change((e)=>{
+                    room_id = $(e.target).attr('id');
+                    percentage = parseFloat($(e.target).val());
+                    watts = parseFloat($('table').find((".").concat(room_id)).find('.consumption').text());
+                    new_goal = (percentage/100) * watts; 
+
+                    $('table').find((".").concat(room_id)).find('.goal').val(new_goal);
+                    
+                    console.log(percentage, watts, new_goal);
+                });
             });
         }
     </script>
