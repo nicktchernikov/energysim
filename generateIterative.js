@@ -176,7 +176,8 @@ if(rooms.some(room => room.hasOwnProperty('weekly'))) {
 var dailyRoomData;
 try {
     // Use existing
-    dailyRoomData = JSON.parse(fs.readFileSync("./dailyOutputs/"+setupId+"_iterative.json"));
+    dailyRoomData = JSON.parse(fs.readFileSync("./dailyOutputs/"+setupId+".json"));
+    console.log("--- using existing dailyRoomData --- ");
 } catch (err) {
     // Create new
     dailyRoomData = [];
@@ -401,7 +402,6 @@ for(j = 0; j < applianceDataPoints.length; j++) {
     }
     applianceDataPoints[j][key] = condensed;
 }
-
 //console.log(applianceDataPoints);
 
 rooms.forEach((room) => {

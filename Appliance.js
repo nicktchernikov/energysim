@@ -1,3 +1,5 @@
+const helpers = require("./helpers");
+
 class Appliance {
 	constructor( _id, _type, _watts1, _watts2, _location, _motive, _min, _max, _alwaysOn, _state, _outputWatts, _timeleft) {
 		this.id = _id;
@@ -25,12 +27,12 @@ class Appliance {
 		this.state = 1;
 		this.outputWatts = this.watts1;
 		if(this.timeleft == 0) {
-            let minutes = getRandomInt(this.min, this.max);
+            let minutes = helpers.getRandomInt(this.min, this.max);
             this.timeleft = Math.max(1, Math.floor(minutes/15));
 		}
 	}
 
-	turnOff(watchfulness) {
+	turnOff() {
 		this.state = -1; // off
 		this.outputWatts = 0;
 		this.timeleft = 0;
@@ -41,12 +43,6 @@ class Appliance {
 		this.outputWatts = this.watts2;
 		this.timeleft = 0;
 	}
-}
-
-function getRandomInt(min, max) {
-	min = Math.ceil(min);
-	max = Math.floor(max);
-	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 module.exports = Appliance

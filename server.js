@@ -504,7 +504,9 @@ app.post("/generateIterative", (req, res) => {
     if(roomGoals.length > 0) { 
       rooms.forEach((room) => {
         roomGoalObj = roomGoals.filter(roomGoal => room.room_id == roomGoal.room_id)[0];
-        room.weekly.goals[room.weekly.goals.length-1] = parseInt(roomGoalObj.goal);
+        if(roomGoalObj) {
+          room.weekly.goals[room.weekly.goals.length-1] = parseInt(roomGoalObj.goal);
+        }
       });
     }
     fs.writeFile("./outputs/"+outputId+".json", JSON.stringify(sim),

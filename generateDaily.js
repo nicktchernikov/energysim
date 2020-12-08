@@ -47,7 +47,10 @@ rooms.forEach((room) => {
                 appInit.motive,
                 appInit.min,
                 appInit.max,
-                appInit.alwaysOn ? true : false
+                appInit.alwaysOn ? true : false,
+                -1,
+                0,
+                0
             )
         );
         app.data = [];
@@ -59,7 +62,23 @@ rooms.forEach((room) => {
 let weeklyRoomData = [];
 rooms.forEach(room => weeklyRoomData.push({room_id: room.room_id, goals : [0,], totals : [0,], diffs : [0,], sliders : [0,]}));
 
-// - Create dailyRoomData 
+// - Create agent
+a = new Agent(watchfulness);
+
+// - Motives for which appliances are randomly turned on 
+motivesR = ['light', 'comfort', 'cleanliness', 'hygiene'];
+
+// - Apps to turn on randomly
+appsR = apps.filter(app => motivesR.includes(app.motive));
+
+// - Hunger apps
+appsH = apps.filter(app => (app.motive == 'hunger' && !app.alwaysOn));
+
+// - Boredom apps 
+appsB = apps.filter(app => (app.motive == 'boredom' && !app.alwaysOn));
+
+
+// Daily room data 
 let dailyRoomData = [];
 rooms.forEach(room => {
     let appliancesDaily = [];
@@ -78,21 +97,6 @@ rooms.forEach(room => {
             appliances: appliancesDaily
         });
 });
-
-// - Create agent
-a = new Agent(watchfulness);
-
-// - Motives for which appliances are randomly turned on 
-randomMotives = ['light', 'comfort', 'cleanliness', 'hygiene'];
-
-// - Apps to turn on randomly
-appsRandomMotive = apps.filter(app => randomMotives.includes(app.motive));
-
-// - Hunger apps
-appsHunger = apps.filter(app => (app.motive == 'hunger' && !app.alwaysOn));
-
-// - Boredom apps 
-appsBoredom = apps.filter(app => (app.motive == 'boredom' && !app.alwaysOn));
 
 // Debugging:
     // fs.writeFile("./test.json", JSON.stringify(dailyRoomData), "utf8", (err) => {
@@ -139,7 +143,7 @@ for(timestep = 0; timestep < timesteps; timestep++) {
           // Goal is set to 5% less than the previous week's total 
           data.diffs[weekNum] = data.totals[weekNum] - data.goals[weekNum];
           data.sliders[weekNum] = Math.min(Math.max(data.diffs[weekNum]/data.goals[weekNum], 0.0), 1.0);
-          data.goals[weekNum+1] = data.totals[weekNum] - (data.totals[weekNum] * 0.05); // Set next week goal
+          data.goals[weekNum+1] = data.totals[weekNum] - (data.totals[weekNum] * 0.05); // set next week goal
           data.totals[weekNum+1] = 0;
         });
    
@@ -170,9 +174,9 @@ for(timestep = 0; timestep < timesteps; timestep++) {
             break;
           }
         }
-        
-        // Increment week number
+        // Advance week number
         weekNum++;
+        //console.log("Week Number " + weekNum + " Over" );
       }    
 
     // Agent wake up/go to sleep
@@ -202,20 +206,20 @@ for(timestep = 0; timestep < timesteps; timestep++) {
     if(a.awake) {
         // Random 
         if(Math.random() > 0.95) {
-            appsRandomMotive.sort(() => Math.random() - 0.5);
-            selected = appsRandomMotive.slice(0, appsRandomMotive.length);
+            appsR.sort(() => Math.random() - 0.5);
+            selected = appsR.slice(0, appsR.length);
             selected.forEach(s => a.changeApplianceState(s));
         }
-        appsRandomMotive.forEach((app) => { if(app.timeleft == 0 & app.state == 1) a.changeApplianceState(app); });
+        appsR.forEach((app) => { if(app.timeleft == 0 & app.state == 1) a.changeApplianceState(app); });
 
         // Hunger motivation
         if (a.hunger >= 1.0) {
             if(!a.cooking) {
-                appsHunger.sort(() => Math.random() - 0.5);
-                selected = appsHunger.slice(0, appsHunger.length);
+                appsH.sort(() => Math.random() - 0.5);
+                selected = appsH.slice(0, appsH.length);
                 selected.forEach((s) => a.changeApplianceState(s));
             } else {
-                if(appsHunger.every((app) => app.timeleft == 0)) {
+                if(appsH.every((app) => app.timeleft == 0)) {
                     //console.log("Agent has eaten.");
                     a.eat();   
                 }
@@ -225,11 +229,11 @@ for(timestep = 0; timestep < timesteps; timestep++) {
         // Boredom motivation
         if(a.boredom >= 1.0) {
             if(!a.beingEntertained) {
-                appsBoredom.sort(() => Math.random() - 0.5);
-                selected = appsBoredom.slice(0, appsBoredom.length);
+                appsB.sort(() => Math.random() - 0.5);
+                selected = appsB.slice(0, appsB.length);
                 selected.forEach((s) => a.changeApplianceState(s));
             } else {
-                if(appsBoredom.every((app) => app.timeleft == 0)) {
+                if(appsB.every((app) => app.timeleft == 0)) {
                     a.entertained();   
                 }
             }
@@ -248,8 +252,6 @@ for(timestep = 0; timestep < timesteps; timestep++) {
             weeklyRoomData.forEach((data) => {
                 if(data.room_id == room.room_id) data.totals[weekNum] += watts;
             });
-
-            // Add watts to daily total
             dailyRoomData.forEach(data => {
                 if(data.room_id == room.room_id) {
                     data.dailyTotal[dayNum] += watts;
@@ -266,7 +268,6 @@ for(timestep = 0; timestep < timesteps; timestep++) {
     // Add 15 minutes
     timestamp += (15*60);
 }
-
 
 // Finish 
 // -----
@@ -291,7 +292,7 @@ rooms.forEach((room) => {
     }
 });
 
-// Add weekly data to rooms
+// Add weekly data
 rooms.forEach((room) => {
     weekly = weeklyRoomData.filter((weekly) => room.room_id == weekly.room_id)[0];
     room.weekly = weekly;
@@ -308,7 +309,6 @@ fs.writeFile("./outputs/"+filename+".json", outputStr, "utf8", (err) => {
     }
 });
 
-// Write cumulative data by day
 dailyData = JSON.stringify(dailyRoomData);
 fs.writeFile("./dailyOutputs/"+filename+"_daily.json", dailyData, "utf8",
 (err, data) => {

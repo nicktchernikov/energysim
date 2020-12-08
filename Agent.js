@@ -3,15 +3,14 @@ class Agent {
 		// traits (floats)
 		this.watchfulness = _watchfulness; // how watchful the Agent is about energy usage
 
-		// booleans
-		this.home = true; // home by default
-		this.awake = true; // not asleep by default
-		this.busy = false; // not doing anything by default 
+		// states (booleans)
+		this.awake = true;
 		
+		// actions (booleans)
 		this.cooking = false;
 		this.beingEntertained = false;
 		
-		// motivations (floats)
+		// motives (floats)
 		this.hunger =  0.0;
 		this.boredom = 0.0;
 	}
@@ -64,22 +63,7 @@ class Agent {
 			}
 		}
 	}
-	
-	changeWatchfulness(_w) {
-		this.watchfulness = _w;
-	}
-	// -- 
 
-	arriveHome() {
-		this.home = true; 
-	}
-
-	leaveHome() {
-		this.home = false; 
-	}
-
-	// -- 
-	
 	goToSleep() {
 		this.awake = false;
 		this.beingEntertained = false;
@@ -91,7 +75,6 @@ class Agent {
 		this.energyLevel = 1.0;
 	}
 
-	// -- 
 	eat() {
 		this.hunger = 0.0;
 		this.cooking = false;
