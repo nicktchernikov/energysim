@@ -1,0 +1,190 @@
+    <div class="ui main text container">
+        <div class="ui segment"> 
+            <!-- load setup filename dropdown -->
+            <h1 class="ui header">Load Setup</h1>
+            <div class="ui selection dropdown">
+                <input type="hidden" name="filename">
+                <i class="dropdown icon"></i>
+                <div class="default text">Choose filename</div>
+                <div class="menu" id="setupFilenames"></div>
+            </div>
+            <div class="ui blue button" id="loadSetupFileButton">Load</div>
+            <!-- /end setup filename dropdown -->
+        </div> <!-- /end segment -->
+
+        <div id="loaded" class="ui segment"> 
+            <div class="ui grid">
+                <div class="column">
+                    <div id="setupIdBox">
+                        <span id="setupId" style="font-weight: bold;"></span> loaded
+                    </div>
+
+                    <div id="setupData"></div>
+
+                    <br />
+                    <div class="ui blue button" id="generateButton" >Generate Next Week</div>
+                    <br/>
+                    <div id="loading" style="margin-top: 10px;">Generating...</div>
+                    
+                    {{!-- <div id="generateMessage" style="margin-top: 10px;">
+                        Done! <a href='/results'>View Results</a>              
+                    </div> --}}
+                
+                </div>
+            </div>
+        </div>
+
+    </div> <!-- /end main -->
+
+    <script>
+        // Get appliance types
+        let applianceTypes = [];
+        $.getJSON('/applianceInits', (data) => {
+            $.each(data, (key, val) => {
+                applianceTypes.push(val.type);
+            });
+        });
+
+        // Get room types 
+        let roomTypes = [
+            'bathroom', 'laundry room', 'bedroom', 
+            'living room', 'kitchen', 'basement'
+        ];
+
+        // DOM loaded
+        $(document).ready(() => {
+            // Activate UI elements
+            activateUI();
+
+            // Load setup filenames into dropdown
+            loadSetupFilenames();
+
+            // Set listeners
+            $('#loadSetupFileButton').click(()=> {
+                let filename = $('input[name="filename"]').val();
+                let setupId = filename.split('.')[0];
+                setupId = setupId + "_iterative";
+                console.log(setupId);
+                $('#setupId').html(setupId);
+                $('#loaded').show();
+
+                let outputExists = false;
+                $.get('/iterativeOutputExists/'+setupId, (res) => {
+                    outputExists = res.outputExists;
+                    if(outputExists) {
+                        // Output exists
+                        displayDataTable(setupId);
+                    } else {
+                        // Output doesn't exist yet
+
+                        // Generate 1st week of data and display it: 
+                        $.get("/generateIterative/"+setupId, (res) =>{
+                            if(res.done) {
+                                displayDataTable(setupId);
+                            }
+                        });
+                    }
+                });
+            
+            });
+            $('#generateButton').click(()=> {
+                $('#generateMessage').hide();
+                $('#loading').show();
+
+                let roomGoals = [];
+                $.each($("table").find(".goal"), (key, value) => {
+                    goal = $(value).val();
+                    room_id = $(value).attr('id');
+                    if(goal && goal > 0) {
+                        roomGoals.push({
+                            "room_id" : room_id,
+                            "goal" : goal
+                        });
+                    }
+                });
+                
+                let setupId = $('#setupId').text();
+                $.post('/generateIterative', 
+                    {
+                        "outputId" : setupId, 
+                        "roomGoals" : JSON.stringify(roomGoals)
+                    }, 
+                (res) => 
+                {
+                    $('#loading').hide();
+                })
+                .done(function() {
+                    displayDataTable(setupId);
+                    $('#loading').hide();
+                });
+            });
+        });
+
+        // Functions
+        function activateUI() {
+            $('.ui.selection.dropdown').dropdown();
+        }
+        function loadSetupFilenames() {
+            $.getJSON('/getSetups', (data) => {
+                data.forEach((setupFilename) => {
+                    setupFilename = setupFilename.split('.')[0];
+                    $('#setupFilenames').append(
+                        '<div class="item" data-value="'+setupFilename+'">'+setupFilename+'</div>'
+                    );
+                });
+            });
+        }
+        function displayDataTable(setupId) {
+            $.get('/getOutputTotalJSON/'+setupId, (data)=> {
+                let settings = data[0];
+                weekNum = settings.weekNum; 
+                let rooms = data[1];
+                let html = '<table border=1><caption>'+setupId+';  week '+weekNum+'; watchfulness: '+settings.watchfulness+'</caption>';
+                
+                html += '<th> room </th>';
+                html += '<th> consumption </th>';
+                html += '<th> goal </th>';
+                html += '<th> unit </th>';
+                html += '<th> next week goal </th>';
+                html += '<td> goal by %</td>';
+                        
+                $.each(rooms, (_, room) => {
+                    html += '<tr class="'+room.room_id+'"><td class="room_id">'+room.room_id+'</td>';
+                    html += '<td class="consumption">'+room.weekly.totals[parseInt(room.weekly.totals.length)-1]+'</td>';
+                    total = parseInt(room.weekly.totals[parseInt(room.weekly.totals.length)-1]);
+                    console.log(room.weekly.goals);
+                    goal = parseInt(room.weekly.goals[parseInt(room.weekly.goals.length)-2]);
+                    html += '<td>'+goal+'</td>';
+
+                    console.log(total, goal);
+
+                    diff = total - goal;    
+                    if(total == 0 && goal == 0) {
+                        slider = 0.0;
+                    } else { 
+                        slider = Math.min(Math.max(diff/goal, 0.0), 1.0).toFixed(2);
+                    }
+                    html += '<td>'+slider+'</td>';
+                    html += '<td><input class="goal" id="'+room.room_id+'" type="number" style="width: 100px;" value="'+total+'"></td>';
+                    
+                    html += '<td><input class="goalPercentage" id="'+room.room_id+'" type="number" min="0" max="100" value="100"></td>';
+
+                    html += '</tr>';
+                });
+                html += '</table>';
+
+                $('#setupData').html(html);
+                                
+                $('.goalPercentage').change((e)=>{
+                    room_id = $(e.target).attr('id');
+                    percentage = parseFloat($(e.target).val());
+                    watts = parseFloat($('table').find((".").concat(room_id)).find('.consumption').text());
+                    new_goal = (percentage/100) * watts; 
+
+                    $('table').find((".").concat(room_id)).find('.goal').val(new_goal);
+                    
+                    console.log(percentage, watts, new_goal);
+                });
+            });
+        }
+    </script>

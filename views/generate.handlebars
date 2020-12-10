@@ -1,111 +1,3 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=2, user-scalable=no"
-    />
-    <meta
-      name="description"
-      content="Semantic-UI-Forest, collection of design, themes and templates for Semantic-UI."
-    />
-    <meta name="keywords" content="Semantic-UI, Theme, Design, Template" />
-    <meta name="author" content="PPType" />
-    <meta name="theme-color" content="#ffffff" />
-    <title>EnergySim</title>
-    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js" crossorigin="anonymous"></script>
-    <script src="./js/range.js"></script>
-
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="./css/semantic.pulse.css"
-      />
-    <link 
-      rel="stylesheet"
-      type="text/css"
-      href="./css/range.css"
-      />
-    <link 
-      rel="stylesheet"
-      type="text/css",
-      href="./css/styles.css"
-      />
-  
-    <script>
-        // Get appliance types
-        let applianceTypes = [];
-        $.getJSON('/applianceInits', (data) => {
-            $.each(data, (key, val) => {
-                applianceTypes.push(val.type);
-            });
-        });
-
-        // Get room types 
-        let roomTypes = [
-            'bathroom', 'laundry room', 'bedroom', 
-            'living room', 'kitchen', 'basement'
-        ];
-
-        // DOM loaded
-        $(document).ready(() => {
-            // Activate UI elements
-            activateUI();
-
-            // Load setup filenames into dropdown
-            loadSetupFilenames();
-
-            // Set listeners
-            $('#loadSetupFileButton').click(()=> {
-                let filename = $('input[name="filename"]').val();
-                let setupId = filename.split('.')[0];
-                $('#setupId').html(setupId);
-                $('#loaded').show();
-            });
-            $('#generateButton').click(()=>{
-                let setupId = $('#setupId').text();
-                $('#generateMessage').hide();
-                $('#loading').show();
-                $.get('/generate/'+setupId, ()=> {
-                    $('#loading').delay(1500).fadeOut(500, () => {
-                        $('#generateMessage').fadeIn(500);
-                    });
-                });
-            });
-        });
-
-        // Functions
-        function activateUI() {
-            $('.ui.selection.dropdown').dropdown();
-        }
-        function loadSetupFilenames() {
-            $.getJSON('/getSetups', (data) => {
-                data.forEach((setupFilename) => {
-                    setupFilename = setupFilename.split('.')[0];
-                    $('#setupFilenames').append(
-                        '<div class="item" data-value="'+setupFilename+'">'+setupFilename+'</div>'
-                    );
-                });
-            });
-        }
-    </script>
-</head>
-
-  <body id="root">
-    <div class="ui top fixed inverted menu">
-      <div class="ui container">
-        <a class="header item title" href="/">
-            EnergySim
-        </a>
-        <a class="item" href="/">Setup</a>
-        <a class="item" href="/generate">Generate</a>
-        <a class="item" href="/results">Results</a>
-      </div>
-    </div>
-
     <div class="ui main text container">
         <div class="ui segment"> 
             <!-- load setup filename dropdown -->
@@ -141,5 +33,60 @@
 
     </div> <!-- /end main -->
 
-  </body>
-</html>
+        <script>
+            // Get appliance types
+            let applianceTypes = [];
+            $.getJSON('/applianceInits', (data) => {
+                $.each(data, (key, val) => {
+                    applianceTypes.push(val.type);
+                });
+            });
+
+            // Get room types 
+            let roomTypes = [
+                'bathroom', 'laundry room', 'bedroom', 
+                'living room', 'kitchen', 'basement'
+            ];
+
+            // DOM loaded
+            $(document).ready(() => {
+                // Activate UI elements
+                activateUI();
+
+                // Load setup filenames into dropdown
+                loadSetupFilenames();
+
+                // Set listeners
+                $('#loadSetupFileButton').click(()=> {
+                    let filename = $('input[name="filename"]').val();
+                    let setupId = filename.split('.')[0];
+                    $('#setupId').html(setupId);
+                    $('#loaded').show();
+                });
+                $('#generateButton').click(()=>{
+                    let setupId = $('#setupId').text();
+                    $('#generateMessage').hide();
+                    $('#loading').show();
+                    $.get('/generate/'+setupId, ()=> {
+                        $('#loading').delay(1500).fadeOut(500, () => {
+                            $('#generateMessage').fadeIn(500);
+                        });
+                    });
+                });
+            });
+
+            // Functions
+            function activateUI() {
+                $('.ui.selection.dropdown').dropdown();
+            }
+            function loadSetupFilenames() {
+                $.getJSON('/getSetups', (data) => {
+                    data.forEach((setupFilename) => {
+                        setupFilename = setupFilename.split('.')[0];
+                        $('#setupFilenames').append(
+                            '<div class="item" data-value="'+setupFilename+'">'+setupFilename+'</div>'
+                        );
+                    });
+                });
+            }
+        </script>

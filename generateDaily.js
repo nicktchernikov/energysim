@@ -47,7 +47,10 @@ rooms.forEach((room) => {
                 appInit.motive,
                 appInit.min,
                 appInit.max,
-                appInit.alwaysOn ? true : false
+                appInit.alwaysOn ? true : false,
+                -1,
+                0,
+                0
             )
         );
         app.data = [];
@@ -244,6 +247,7 @@ for(timestep = 0; timestep < timesteps; timestep++) {
             if (appObj.alwaysOn == true) appObj.turnOn();
             let watts = appObj.outputWatts;
             appliance.data[0].y.push(watts);
+
             // Add watts to weekly total
             weeklyRoomData.forEach((data) => {
                 if(data.room_id == room.room_id) data.totals[weekNum] += watts;
@@ -264,10 +268,6 @@ for(timestep = 0; timestep < timesteps; timestep++) {
     // Add 15 minutes
     timestamp += (15*60);
 }
-
-fs.writeFile("./test.json", JSON.stringify(dailyRoomData), "utf8", (err) => {
-    if(err) throw err;
-});
 
 // Finish 
 // -----
@@ -295,8 +295,6 @@ rooms.forEach((room) => {
 // Add weekly data
 rooms.forEach((room) => {
     weekly = weeklyRoomData.filter((weekly) => room.room_id == weekly.room_id)[0];
-    weekly = weekly.length 
-    //console.log(weekly);
     room.weekly = weekly;
 });
 
@@ -317,51 +315,3 @@ fs.writeFile("./dailyOutputs/"+filename+"_daily.json", dailyData, "utf8",
     if(err) throw err;
     console.log("Wrote daily data to " + filename+"_daily.json");
 });
-
-// TODO: 
-
-// After 1 week, we want to output daily totals for each room
-// e.g. 
-// Room 1 
-// Day 1: 1201
-// Day 2: 4214
-// Day 3: 2310
-// Day 4: 3901
-// ... and so on 
-// Room 2: 
-// Day 1: 1312
-// Day 2: 9401
-// .. you get the idea
-
-// We also want to append this data to the 
-// total file 
-
-// Metadata: 
-// * which appliances are on or off
-// * initial timestamp
-// * increment 
-// * agent watchfulness 
-
-// and then for the user to be able to click a button on the front 
-// end which generates the next weeks' data based on what goal values 
-// the user selected for the following week
-
-// Figure out how daily total values fit into this
-// Figure out how to calculate average 
-// - weekly average
-// - monthly average 
-
-// After a week of data generation, we want to output the following data: 
-// room1  
-// - goal
-// - consumption 
-// - slider value
-// - appliances:
-/// [ 1, 2, ... n ]
-// room 2 
-/// ...
-// room n 
-
-// Along with the metadata
-// - week number 
-// - 

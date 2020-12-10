@@ -1,4 +1,4 @@
-function condense(rooms) {
+function condense(rooms) { // 15-minute timesteps to 1 hour totals
     for (i = 0; i < rooms.length; i++) {
         let appliances = rooms[i].appliances;
         for (j = 0; j < appliances.length; j++) {
@@ -17,10 +17,16 @@ function condense(rooms) {
                 }
             }
             rooms[i].appliances[j].data[0].y = new_y;
-            rooms[i].appliances[j].layout = {title: rooms[i].appliances[j].appliance_id + " in " + rooms[i].room_id, xaxis: { title: "time (hours)" }, yaxis: { title: "joules (watts/sec)" },};
+            rooms[i].appliances[j].layout = {title: rooms[i].appliances[j].appliance_id + " in " + rooms[i].room_id, xaxis: { title: "time (hours)" }, yaxis: { title: "watts" },};
         }
     }
     return rooms;
 }
 
-module.exports = { condense }
+function getRandomInt(min, max) {
+	min = Math.ceil(min);
+	max = Math.floor(max);
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+module.exports = { condense, getRandomInt }

@@ -28,6 +28,7 @@ app.get('/generate', (_, res) => res.render('generate'));
 
 // Render Results page (HTML)
 app.get("/results", (req, res) => {
+  console.log(req.params.test);
   filenames = fs.readdirSync(path.join(__dirname, "outputs"));
   filename = filenames[0]; // Choose first filename in list
 
@@ -66,6 +67,10 @@ function getOutputData(outputId, callback) {
     App Routes: 
     ----------
 */
+
+app.post('/post', (req, res) => {
+  res.json(req.body);
+});
 
 // Render 
 app.get("/", (req, res) => {
@@ -229,6 +234,12 @@ app.get("/getOutputs", (_, res) => {
   });
 });
 
+// Check that an iterative output exists already
+app.get("/iterativeOutputExists/:setupId", (req, res) => {
+  let exists = fs.existsSync("./outputs/"+req.params.setupId+".json"); 
+  res.json({"outputExists" : exists});
+});
+
 // Save a setup file 
 app.post("/saveSetup", (req, res) => {
   settings = [];
@@ -236,8 +247,18 @@ app.post("/saveSetup", (req, res) => {
 
   rooms = sessionHouse;
 
+  if(rooms.length == 0) {
+    res.json({"error" : "No rooms"});
+  }
+
+  settings[0].watchfulness_by_room = {};
+  rooms.forEach((room) => {
+    settings[0].watchfulness_by_room[room.room_id] = settings[0].watchfulness;
+  });
+
   // -- Check if any room has no appliances 
   rooms.forEach((room) => {
+    console.log(room.appliances.length);
     if (room.appliances.length == 0) res.json({"error" : "Empty"});
   });
 
@@ -362,13 +383,29 @@ app.get("/generate/:setupId", (req, res) => {
   if(!setupId) throw "No Setup Id provided.";
 
   // Run and invoke a callback when complete, e.g.
-  runScript("./generate.js", [setupId, true], function (err) {
+  runScript("./generateDaily.js", [setupId, true], function (err) {
     if (err) throw err;
   });
-  runScript("./generate.js", [setupId, false], function (err) {
+  runScript("./generateDaily.js", [setupId, false], function (err) {
     if (err) throw err;
   });
   res.json("Running scripts!");
+});
+
+app.get("/generateIterative/:setupId", (req, res) =>{
+  let setupId = req.params.setupId;
+  if(!setupId) throw "No Setup Id provided.";
+
+  // Run and invoke a callback when complete, e.g.
+  runScript("./generateIterative.js", [setupId], function (err) {
+
+    if (err) {
+      res.json({"done" : false});
+      throw err;
+    } else {
+      res.json({"done" : true});
+    }
+  });
 });
 
 // Chunk hours -> week and output as JSON
@@ -415,13 +452,13 @@ app.get("/weekly/:outputId/:weekNum", (req, res) => {
 // Return only the weeklyData for an Outpud ID
 // * used within Unity
 app.get("/unity/:outputId", (req, res) => {
+  console.log("running");
   getOutputData(req.params.outputId, (data) => {
     let weekly = [];
     data[1].forEach((room) => weekly.push(room["weekly"]));
     res.json(weekly);
   });
 });
-
 
 // Render weeks page (HTML) 
 // * Takes <outputID> and optional <weekNum> 
@@ -455,6 +492,70 @@ app.get("/weeklyResults/:outputId/:weekNum?", (req, res) => {
   });
 });
 
+app.get("/generateWeekly", (_req, res) => {
+  res.render("generateIterative");
+});
+
+app.get("/getWeeklySetup/:setupId", (req, res) => {
+  let setupId = req.params.setupId;
+  fs.readFile("./weeklySetups/"+setupId+".json", 'utf8', (err, data) => {
+    if(err) throw err;
+    res.json(data);
+  });
+}); 
+
+app.post("/generateIterative", (req, res) => {
+
+  console.log(req.body);
+  let outputId = req.body.outputId;
+  let roomGoals = JSON.parse(req.body.roomGoals);
+
+  // Change goals
+  fs.readFile("./outputs/"+outputId+".json", 'utf8', (err, data) => {
+    let sim = JSON.parse(data);
+    let rooms = sim[1];
+    
+    if(roomGoals.length > 0) { 
+      rooms.forEach((room) => {
+        roomGoalObj = roomGoals.filter(roomGoal => room.room_id == roomGoal.room_id)[0];
+        if(roomGoalObj) {
+          room.weekly.goals[room.weekly.goals.length-1] = parseInt(roomGoalObj.goal);
+        }
+      });
+    }
+    fs.writeFile("./outputs/"+outputId+".json", JSON.stringify(sim),
+    (err, data) => {
+      if(err) throw err;
+      if(roomGoals.length > 0) { 
+        console.log("Wrote new goals!");
+      }
+    });
+
+  });
+
+  runScript("./generateIterative.js", [outputId], function(err) {
+    if(err) {
+      res.json({"done" : false})
+      throw err;
+    } else {
+      res.json({"done" : true});
+    }
+  });
+
+});
+
+// app.post("/getIterativeData", (req, res) => {
+//   let setupId = req.params.setupId;
+//   weeklySetup = fs.readFileSync("./weeklySetups/"+setupId+".json");
+// });
+
+// app.post("/postParamsToIterative", (req, res) => {
+//   // here we need to take the user set 
+//   // goals and past them back to 
+// });
+
+// generate next week of data based on the passed 
+// parameters ...
 
 // Chunk function:
 // --------------- 
@@ -479,6 +580,7 @@ app.get('/unityDaily/:outputId', (req, res) => {
 // Child process runScript script:
 // -------------------------------
 var childProcess = require("child_process");
+
 function runScript(scriptPath, child_argv, callback) {
   // keep track of whether callback has been invoked to prevent multiple invocations
   var invoked = false;
