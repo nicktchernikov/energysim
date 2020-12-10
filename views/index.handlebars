@@ -211,9 +211,12 @@
             'watchfulness' : watchfulnessInput,
             })
             .done((data)=> {
+              console.log(data);
               if(data.error == "Empty") {
                 alert('Please add at least one appliance in each room.');
-              } else {
+              } else if(data.error == "No rooms") {
+                alert('Please add at least one room.');
+              }else {
                 alert('Saved as Setup "'+setupId+ '"!');
                 // Reload setup filenames
                 loadSetupFilenames();

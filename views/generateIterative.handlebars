@@ -92,7 +92,7 @@
                 $('#loading').show();
 
                 let roomGoals = [];
-                $.each($("table").find("input"), (key, value) => {
+                $.each($("table").find(".goal"), (key, value) => {
                     goal = $(value).val();
                     room_id = $(value).attr('id');
                     if(goal && goal > 0) {

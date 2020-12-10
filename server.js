@@ -68,6 +68,10 @@ function getOutputData(outputId, callback) {
     ----------
 */
 
+app.post('/post', (req, res) => {
+  res.json(req.body);
+});
+
 // Render 
 app.get("/", (req, res) => {
   res.render("index", {
@@ -243,8 +247,18 @@ app.post("/saveSetup", (req, res) => {
 
   rooms = sessionHouse;
 
+  if(rooms.length == 0) {
+    res.json({"error" : "No rooms"});
+  }
+
+  settings[0].watchfulness_by_room = {};
+  rooms.forEach((room) => {
+    settings[0].watchfulness_by_room[room.room_id] = settings[0].watchfulness;
+  });
+
   // -- Check if any room has no appliances 
   rooms.forEach((room) => {
+    console.log(room.appliances.length);
     if (room.appliances.length == 0) res.json({"error" : "Empty"});
   });
 
@@ -566,7 +580,7 @@ app.get('/unityDaily/:outputId', (req, res) => {
 // Child process runScript script:
 // -------------------------------
 var childProcess = require("child_process");
-const { UV_FS_O_FILEMAP } = require("constants");
+
 function runScript(scriptPath, child_argv, callback) {
   // keep track of whether callback has been invoked to prevent multiple invocations
   var invoked = false;
