@@ -201,8 +201,6 @@ try {
     });
 }
 
-
-
 // - Motives for which appliances are randomly turned on 
 randomMotives = ['light', 'comfort', 'cleanliness', 'hygiene'];
 // - Apps to turn on randomly

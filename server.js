@@ -6,6 +6,8 @@ const express = require("express");
 var exphbs = require("express-handlebars");
 const app = express();
 app.use(express.static("views")); // Folder name for static files
+app.use(express.urlencoded());
+app.use(express.json());
 
 // Handelebars
 app.engine("handlebars", exphbs());
@@ -67,9 +69,26 @@ function getOutputData(outputId, callback) {
     App Routes: 
     ----------
 */
-
 app.post('/post', (req, res) => {
   res.json(req.body);
+});
+
+app.get('/getRoomIds/:outputId', (req, res) => {
+  output_id = req.params.outputId;
+  console.log(output_id);
+
+  room_ids = [];
+  fs.readFile('./outputs/'+output_id+'.json', 'utf8', (err, read_file_response) => {
+    if(err) throw err;
+    sim = JSON.parse(read_file_response);
+    rooms = sim[1];
+    rooms.forEach((room) => {
+      room_ids.push(room.room_id);
+    });
+    console.log(room_ids);
+    res.json(room_ids);
+  });
+
 });
 
 // Render 
