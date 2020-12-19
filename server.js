@@ -185,7 +185,7 @@ app.post("/add-appliance", (req, res) => {
   let i = 0;
   sessionHouse.forEach((room) => {
     if (room.room_id == room_id) {
-      sessionHouse[i].appliances.push({ appliance_id: appliance_id });
+      sessionHouse[i].appliances.push({ appliance_id: appliance_id, in_room : room.room_id });
     }
     i++;
   });
@@ -363,12 +363,14 @@ app.get("/results/:results_filename_id/:type?", (req, res) => {
 // Get Output File as JSON and sum the values
 app.get('/getOutputTotalJSON/:outputId', (req, res) => {
   let outputId = req.params.outputId;
+  console.log(outputId);
   fs.readFile('./outputs/'+outputId+'.json', 'utf8', (err, data) => {
     //TODO
     // - 
       let json = JSON.parse(data);
       let settings = json[0];
       let rooms = json[1];
+
       rooms.forEach((room) => {
         room.appliances.forEach((appliance) => {
           newY = [];
@@ -471,7 +473,7 @@ app.get("/weekly/:outputId/:weekNum", (req, res) => {
 // Return only the weeklyData for an Outpud ID
 // * used within Unity
 app.get("/unity/:outputId", (req, res) => {
-  console.log("running");
+  //console.log("running");
   getOutputData(req.params.outputId, (data) => {
     let weekly = [];
     data[1].forEach((room) => weekly.push(room["weekly"]));
@@ -523,8 +525,71 @@ app.get("/getWeeklySetup/:setupId", (req, res) => {
   });
 }); 
 
-app.post("/generateIterative", (req, res) => {
+app.post("/unityGenerateIterative", (req, res) => {
+  console.log(req.body);
 
+  let roomGoals = [];
+  outputId = req.body.output_id;
+
+  Object.keys(req.body).forEach((key) => {
+    if(key !== "output_id" ) {
+
+      if(req.body[key] == "") { // improve null data handling
+        req.body[key] = 0; // set to total consumption
+      }
+
+      roomGoals.push({ 
+          "room_id" : key, 
+          "goal" : req.body[key]
+        });
+    }
+  });
+
+  // Change goals
+  fs.readFile("./outputs/"+outputId+".json", 'utf8', (err, data) => {
+    let sim = JSON.parse(data);
+    let rooms = sim[1];
+    
+    if(roomGoals.length > 0) { 
+      rooms.forEach((room) => {
+        roomGoalObj = roomGoals.filter(roomGoal => room.room_id == roomGoal.room_id)[0];
+        if(roomGoalObj) {
+          room.weekly.goals[room.weekly.goals.length-1] = parseInt(roomGoalObj.goal);
+        }
+      });
+    }
+    fs.writeFile("./outputs/"+outputId+".json", JSON.stringify(sim),
+      (err, data) => {
+      if(err) throw err;
+      if(roomGoals.length > 0) { 
+        console.log(">  Wrote goals to ./outputs/"+outputId+".json");
+      }
+    });
+  });
+
+  runScript("./generateIterative.js", [outputId], function(err) {
+    if(err) {
+      res.json({"done" : false})
+      throw err;
+    } else {
+      res.json({"done" : true});
+    }
+  });
+  
+});
+
+app.get("/unityGetCurrentWeek/:output_id", (req, res) => {
+  fs.readFile("./outputs/"+req.params.output_id+".json", 'utf8', (err, data) => {
+    let sim = JSON.parse(data);
+    let settings = sim[0];
+    let weekNum = settings.weekNum;
+    console.log(settings.weekNum);  
+    res.json([weekNum]);
+  });
+  
+});
+
+app.post("/generateIterative", (req, res) => {
   console.log(req.body);
   let outputId = req.body.outputId;
   let roomGoals = JSON.parse(req.body.roomGoals);
@@ -543,10 +608,10 @@ app.post("/generateIterative", (req, res) => {
       });
     }
     fs.writeFile("./outputs/"+outputId+".json", JSON.stringify(sim),
-    (err, data) => {
+      (err, data) => {
       if(err) throw err;
       if(roomGoals.length > 0) { 
-        console.log("Wrote new goals!");
+        console.log(">  Wrote goals to ./outputs/"+outputId+".json");
       }
     });
 
@@ -562,19 +627,6 @@ app.post("/generateIterative", (req, res) => {
   });
 
 });
-
-// app.post("/getIterativeData", (req, res) => {
-//   let setupId = req.params.setupId;
-//   weeklySetup = fs.readFileSync("./weeklySetups/"+setupId+".json");
-// });
-
-// app.post("/postParamsToIterative", (req, res) => {
-//   // here we need to take the user set 
-//   // goals and past them back to 
-// });
-
-// generate next week of data based on the passed 
-// parameters ...
 
 // Chunk function:
 // --------------- 

@@ -1,7 +1,7 @@
 const helpers = require("./helpers");
 
 class Appliance {
-	constructor( _id, _type, _watts1, _watts2, _location, _motive, _min, _max, _alwaysOn, _state, _outputWatts, _timeleft) {
+	constructor( _id, _type, _watts1, _watts2, _location, _motive, _min, _max, _alwaysOn, _state, _outputWatts, _timeleft, _in_room) {
 		this.id = _id;
 		this.type = _type; 
 
@@ -21,6 +21,8 @@ class Appliance {
 		this.max = _max;
 
 		this.alwaysOn = _alwaysOn;
+		
+		this.in_room = _in_room;
 	}
 	
 	turnOn() {

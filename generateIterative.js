@@ -8,28 +8,19 @@ const Agent = require("./Agent.js");
 const Appliance = require("./Appliance.js");
 const appInits = require("./applianceInits.js");
 
-function iterativeOutputExists(setupId) {
-    fs.readFile("./outputs/"+setupId+"_iterative.json", (err, data) => {
-        if(err) throw err;
-        return (data) ? true : false;
-    });
-}
 
 // Setup 
 // -----
 
-// - Get setup data
-//setupId = process.argv[2];
-//if(!setupId) throw "No setup ID.";
-
 let setupId = process.argv[2];
 
-console.log("Setup ID = " + setupId);
+console.log("Simulation ID = " + setupId);
 
 // - House rooms and settings
 var setup;
 var settings;
 var rooms;
+
 
 var initial = false;
 try {
@@ -49,49 +40,58 @@ try {
     initial = true;  
 }
 
+console.log("[Settings]");
+console.log(settings);
+console.log("[/Settings]");
+
 if(!initial) {
     // Change watchfulness with goal values
-    let adjustWatchfulness = false;
+    let watchfulness = settings.watchfulness;
+    let watchfulness_by_room = settings.watchfulness_by_room;
+
+    console.log("[watchfulness_by_room]");
+    console.log(watchfulness_by_room);
+    console.log("[/watchfulness_by_room]");
+
+    Object.keys(watchfulness_by_room).forEach((k) => {
+        watchfulness_by_room[k] = parseFloat(watchfulness_by_room[k]);
+    });
+
     for(i = 0; i < rooms.length; i++) {
         room = rooms[i];
         last_goal = parseInt(room.weekly.goals[room.weekly.goals.length-1]);
         last_total = parseInt(room.weekly.totals[room.weekly.totals.length-1]);
 
+        console.log("[last_goal, last_total]");
         console.log(last_goal, last_total);
+        console.log("[/last_goal, last_total]");
 
         if(last_goal < last_total) {
-            adjustWatchfulness = true;
-            break;
+            // Adjust room watchfulness here
+            console.log("* Increasing " + room.room_id + " watchfulness!");
+            watchfulness_by_room[room.room_id] += 0.05;
         }
     }
-    console.log("adjustWatchfulness = " + adjustWatchfulness);
+    
+    // Average 
+    let sum = 0.0;
+    Object.keys(watchfulness_by_room).forEach((k) => {
+        sum += watchfulness_by_room[k];
+    });
+    watchfulness = parseFloat(sum / Object.keys(watchfulness_by_room).length);
 
-    if(adjustWatchfulness) {
-        // - Agent
-        let watchfulness = parseFloat(settings.watchfulness);
-        // - Create agent
-        a = new Agent(watchfulness);
-        console.log("true");
-        a.watchfulness += 0.02;
-        console.log("increasing watchfulness by 0.1");
-        a.watchfulness = Math.min(a.watchfulness, 1.0);
-        console.log("watchfulness = " + a.watchfulness);
-    } else {
-        // - Agent
-        let watchfulness = parseFloat(settings.watchfulness);
-        // - Create agent
-        a = new Agent(watchfulness);
-    }
+    // - Create agent
+    a = new Agent(watchfulness, watchfulness_by_room);
 } else {
     // - Agent
     let watchfulness = parseFloat(settings.watchfulness);
+    let watchfulness_by_room = settings.watchfulness_by_room;
+
     // - Create agent
-    a = new Agent(watchfulness);
+    a = new Agent(watchfulness, watchfulness_by_room);
 }
 
-initial ? console.log("--- using initial setup JSON file ---") : console.log("--- using existing output file ---");
-
-console.log(settings);
+initial ? console.log(">  Using initial setup file") : console.log(">  Using existing output file");
 
 // - Simulation
 let timestamp = parseInt(settings.start);
@@ -126,7 +126,8 @@ rooms.forEach((room) => {
                 // endState if output existed:
                 appState, 
                 appOutputWatts,
-                appTimeleft
+                appTimeleft,
+                app.in_room
             )
         );
         if(!app.hasOwnProperty('data')) {
@@ -177,10 +178,11 @@ var dailyRoomData;
 try {
     // Use existing
     dailyRoomData = JSON.parse(fs.readFileSync("./dailyOutputs/"+setupId+".json"));
-    console.log("--- using existing dailyRoomData --- ");
+    console.log(">  Using existing dailyRoomData");
 } catch (err) {
     // Create new
     dailyRoomData = [];
+    console.log(">  Creating new dailyRoomData");
 
     rooms.forEach(room => {
         let appliancesDaily = [];
@@ -225,6 +227,9 @@ function updateDayNum(newDayNum) {
 
 // Start Simulation Loop
 // -----
+
+console.log(">  Starting simulation...");
+
 timesteps = 672; // 1 week of 15-minute timesteps
 for(timestep = 0; timestep < timesteps; timestep++) {
     
@@ -243,7 +248,7 @@ for(timestep = 0; timestep < timesteps; timestep++) {
         updateDayNum(newDayNum); 
         
         console.log(
-            "--- new dayNum : " + dayNum
+            "[dayNum] " + dayNum + " [/dayNum]"
         );
 
         // Set next day up for each appliance
@@ -277,7 +282,9 @@ for(timestep = 0; timestep < timesteps; timestep++) {
     // Turn off appliance if time left hits 0
     apps.forEach((app) => {
         app.timeleft = Math.max(app.timeleft-15, 0);
-        if(app.timeleft == 0 && app.state == 1) a.changeApplianceState(app);
+        if(app.timeleft == 0 && app.state == 1) {
+            a.changeApplianceState(app);
+        }
     });
 
     // Turn appliances on/off
@@ -286,7 +293,9 @@ for(timestep = 0; timestep < timesteps; timestep++) {
         if(Math.random() > 0.95) {
             appsRandomMotive.sort(() => Math.random() - 0.5);
             selected = appsRandomMotive.slice(0, appsRandomMotive.length);
-            selected.forEach(s => a.changeApplianceState(s));
+            selected.forEach(s => {
+                a.changeApplianceState(s);
+            });
         }
         appsRandomMotive.forEach((app) => { if(app.timeleft == 0 & app.state == 1) a.changeApplianceState(app); });
 
@@ -376,7 +385,8 @@ rooms.forEach(room => {
 // Prepare next week's setup settings
 let nextWeek = {
     "start": timestamp,
-    "watchfulness": a.watchfulness // Will change
+    "watchfulness": a.watchfulness, // Will change
+    "watchfulness_by_room": a.watchfulness_by_room // Will change
 };
 settings.watchfulness = a.watchfulness;
 settings.nextWeek = nextWeek;
@@ -443,7 +453,7 @@ fs.writeFile("./outputs/"+setupId+".json", outputString, "utf8", (err) => {
     if(err) { 
         throw err;
     } else {
-        console.log("Wrote output to /outputs folder. Filename: " + setupId + ".json");
+        console.log(">  Wrote ./outputs/"+setupId+".json");
     }
 });
 
@@ -451,5 +461,5 @@ fs.writeFile("./outputs/"+setupId+".json", outputString, "utf8", (err) => {
 dailyRoomDataString = JSON.stringify(dailyRoomData);
 fs.writeFile("./dailyOutputs/"+setupId+".json", dailyRoomDataString, "utf8",(err, _) => {
     if(err) throw err;
-    console.log("Wrote daily data to " + setupId +".json");
+    console.log(">  Wrote ./dailyOutputs/"+setupId+".json");
 });
