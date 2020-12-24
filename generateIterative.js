@@ -21,7 +21,6 @@ var setup;
 var settings;
 var rooms;
 
-
 var initial = false;
 try {
     setup = JSON.parse(fs.readFileSync("./outputs/"+setupId+".json"));
@@ -69,7 +68,7 @@ if(!initial) {
         if(last_goal < last_total) {
             // Adjust room watchfulness here
             console.log("* Increasing " + room.room_id + " watchfulness!");
-            watchfulness_by_room[room.room_id] += 0.05;
+            watchfulness_by_room[room.room_id] += 0.005;
         }
     }
     
@@ -79,12 +78,15 @@ if(!initial) {
         sum += watchfulness_by_room[k];
     });
     watchfulness = parseFloat(sum / Object.keys(watchfulness_by_room).length);
+    watchfulness = Math.min(1.0, watchfulness);
 
     // - Create agent
     a = new Agent(watchfulness, watchfulness_by_room);
 } else {
     // - Agent
     let watchfulness = parseFloat(settings.watchfulness);
+    watchfulness = Math.min(1.0, watchfulness);
+
     let watchfulness_by_room = settings.watchfulness_by_room;
 
     // - Create agent
@@ -166,9 +168,8 @@ if(rooms.some(room => room.hasOwnProperty('weekly'))) {
         {
             room_id: room.room_id,
             goals : [0,], 
-            totals : [0,], 
-            diffs : [0,], 
-            sliders : [0,]
+            totals : [0,],
+            watchfulness : [0.0,]
         });
     });
 }
@@ -407,7 +408,6 @@ for(j = 0; j < applianceDataPoints.length; j++) {
     }
     applianceDataPoints[j][key] = condensed;
 }
-//console.log(applianceDataPoints);
 
 rooms.forEach((room) => {
     room.appliances.forEach((appliance) => {
@@ -427,6 +427,7 @@ rooms.forEach((room) => {
 // Add weekly data to rooms
 rooms.forEach((room) => {
     weekly = weeklyRoomData.filter((weekly) => room.room_id == weekly.room_id)[0];
+    weekly.watchfulness[weekNum] = a.watchfulness_by_room[room.room_id];
     weekly.goals[(weekNum+1)] = weekly.totals[weekNum];
     room.weekly = weekly;
 });

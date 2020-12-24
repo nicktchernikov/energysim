@@ -48,9 +48,9 @@ rooms.forEach((room) => {
                 appInit.min,
                 appInit.max,
                 appInit.alwaysOn ? true : false,
-                -1,
-                0,
-                0
+                -1, // state 
+                0, // outputWatts
+                0 // timeleft
             )
         );
         app.data = [];
@@ -76,7 +76,6 @@ appsH = apps.filter(app => (app.motive == 'hunger' && !app.alwaysOn));
 
 // - Boredom apps 
 appsB = apps.filter(app => (app.motive == 'boredom' && !app.alwaysOn));
-
 
 // Daily room data 
 let dailyRoomData = [];

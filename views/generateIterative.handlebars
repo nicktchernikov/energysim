@@ -139,9 +139,10 @@
                 let settings = data[0];
                 weekNum = settings.weekNum; 
                 let rooms = data[1];
-                let html = '<table border=1><caption>'+setupId+';  week '+weekNum+'; watchfulness: '+settings.watchfulness+'</caption>';
+                let html = '<table border=1><caption>'+setupId+';  week '+weekNum+'; watchfulness: '+settings.watchfulness.toFixed(2)+'</caption>';
                 
                 html += '<th> room </th>';
+                html += '<th> watchfulness </th>';
                 html += '<th> consumption </th>';
                 html += '<th> goal </th>';
                 html += '<th> unit </th>';
@@ -150,6 +151,7 @@
                         
                 $.each(rooms, (_, room) => {
                     html += '<tr class="'+room.room_id+'"><td class="room_id">'+room.room_id+'</td>';
+                    html += '<td>'+room.weekly.watchfulness[weekNum]+'</td>';
                     html += '<td class="consumption">'+room.weekly.totals[parseInt(room.weekly.totals.length)-1]+'</td>';
                     total = parseInt(room.weekly.totals[parseInt(room.weekly.totals.length)-1]);
                     console.log(room.weekly.goals);

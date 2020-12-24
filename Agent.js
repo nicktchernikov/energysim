@@ -21,12 +21,11 @@ class Agent {
 		//console.log(appliance);
 		this.current_room = appliance.in_room;
 		let room_app_is_in_watchfulness = parseFloat(this.watchfulness_by_room[this.current_room]);
-
-
-		console.log("[in changeApplianceState]");
-		console.log(appliance.id + " is in " + this.current_room);
-		console.log("Agent's current watchfulness is " + room_app_is_in_watchfulness);
-		console.log("[/in changeApplianceState]");
+		
+		// console.log("[in changeApplianceState]");
+		// console.log(appliance.id + " is in " + this.current_room);
+		// console.log("Agent's current watchfulness is " + room_app_is_in_watchfulness);
+		// console.log("[/in changeApplianceState]");
 
 		if(!this.cooking && appliance.motive == 'hunger' && (appliance.state == -1 || appliance.state == 0) && this.hunger >= 1.0 && appliance.timeleft == 0) {
 			if(Math.random() > this.watchfulness) { 

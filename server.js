@@ -272,7 +272,7 @@ app.post("/saveSetup", (req, res) => {
 
   settings[0].watchfulness_by_room = {};
   rooms.forEach((room) => {
-    settings[0].watchfulness_by_room[room.room_id] = settings[0].watchfulness;
+    settings[0].watchfulness_by_room[room.room_id] = parseFloat(settings[0].watchfulness);
   });
 
   // -- Check if any room has no appliances 
@@ -525,31 +525,28 @@ app.get("/getWeeklySetup/:setupId", (req, res) => {
   });
 }); 
 
-app.post("/unityGenerateIterative", (req, res) => {
-  console.log(req.body);
-
-  let roomGoals = [];
-  outputId = req.body.output_id;
-
-  Object.keys(req.body).forEach((key) => {
-    if(key !== "output_id" ) {
-
-      if(req.body[key] == "") { // improve null data handling
-        req.body[key] = 0; // set to total consumption
-      }
-
-      roomGoals.push({ 
-          "room_id" : key, 
-          "goal" : req.body[key]
-        });
-    }
+app.get("/unityGetCurrentWeek/:output_id", (req, res) => {
+  fs.readFile("./outputs/"+req.params.output_id+".json", 'utf8', (err, data) => {
+    let sim = JSON.parse(data);
+    let settings = sim[0];
+    let weekNum = settings.weekNum;
+    console.log(settings.weekNum);  
+    res.json([weekNum]);
   });
+  
+});
+
+app.post("/generateIterative", (req, res) => {
+  console.log("/generativeIterative", req.body);
+  let outputId = req.body.outputId;
+  let roomGoals = JSON.parse(req.body.roomGoals);
+
+  console.log(roomGoals);
 
   // Change goals
   fs.readFile("./outputs/"+outputId+".json", 'utf8', (err, data) => {
     let sim = JSON.parse(data);
     let rooms = sim[1];
-    
     if(roomGoals.length > 0) { 
       rooms.forEach((room) => {
         roomGoalObj = roomGoals.filter(roomGoal => room.room_id == roomGoal.room_id)[0];
@@ -575,25 +572,25 @@ app.post("/unityGenerateIterative", (req, res) => {
       res.json({"done" : true});
     }
   });
-  
+
 });
 
-app.get("/unityGetCurrentWeek/:output_id", (req, res) => {
-  fs.readFile("./outputs/"+req.params.output_id+".json", 'utf8', (err, data) => {
-    let sim = JSON.parse(data);
-    let settings = sim[0];
-    let weekNum = settings.weekNum;
-    console.log(settings.weekNum);  
-    res.json([weekNum]);
+app.post("/unityGenerateIterative", (req, res) => {
+  console.log("/unityGenerativeIterative", req.body);
+  let roomGoals = [];
+  outputId = req.body.output_id;
+  Object.keys(req.body).forEach((key) => {
+    if(key !== "output_id" ) {
+      if(req.body[key] == "") { // improve null data handling
+        req.body[key] = 0; // set to total consumption
+      }
+      roomGoals.push({ 
+          "room_id" : key, 
+          "goal" : parseInt(req.body[key])
+        });
+    }
   });
-  
-});
-
-app.post("/generateIterative", (req, res) => {
-  console.log(req.body);
-  let outputId = req.body.outputId;
-  let roomGoals = JSON.parse(req.body.roomGoals);
-
+  console.log(roomGoals);
   // Change goals
   fs.readFile("./outputs/"+outputId+".json", 'utf8', (err, data) => {
     let sim = JSON.parse(data);
@@ -613,8 +610,8 @@ app.post("/generateIterative", (req, res) => {
       if(roomGoals.length > 0) { 
         console.log(">  Wrote goals to ./outputs/"+outputId+".json");
       }
-    });
 
+    });
   });
 
   runScript("./generateIterative.js", [outputId], function(err) {
