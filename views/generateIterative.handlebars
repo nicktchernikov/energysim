@@ -139,7 +139,7 @@
                 let settings = data[0];
                 weekNum = settings.weekNum; 
                 let rooms = data[1];
-                let html = '<table border=1><caption>'+setupId+';  week '+weekNum+'; watchfulness: '+settings.watchfulness.toFixed(2)+'</caption>';
+                let html = '<table border=1><caption> output id: <strong>'+setupId+'</strong> <br /> week #: <strong>'+weekNum+'</strong> <br /> average watchfulness: <strong>'+settings.watchfulness.toFixed(2)+'</strong></caption>';
                 
                 html += '<th> room </th>';
                 html += '<th> watchfulness </th>';

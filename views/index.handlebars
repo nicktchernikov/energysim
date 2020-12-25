@@ -212,13 +212,13 @@
             })
             .done((data)=> {
               console.log(data);
-              if(data.error == "Empty") {
+              if(data.error == "No appliances") {
                 alert('Please add at least one appliance in each room.');
               } else if(data.error == "No rooms") {
                 alert('Please add at least one room.');
-              }else {
-                alert('Saved as Setup "'+setupId+ '"!');
-                // Reload setup filenames
+              } else {
+                alert('Saved with setup id: ' + setupId);
+                // Refresh setup filenames
                 loadSetupFilenames();
               }
             });

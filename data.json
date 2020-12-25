@@ -1,0 +1,29 @@
+{
+  "appliances" : [
+    {
+      "id": 1,
+      "name": "microwave"
+    },
+    {
+      "id": 2,
+      "name": "tv"
+    }
+  ],
+  "parts" : [
+    {
+      "id": 1, 
+      "name" : "tray",
+      "appliance_id" : 1
+    },
+    {
+      "id": 2, 
+      "name" : "remote control",
+      "appliance_id" : 2
+    },
+    {
+      "id": 3, 
+      "name" : "screen",
+      "appliance_id" : 2
+    }
+  ]
+}

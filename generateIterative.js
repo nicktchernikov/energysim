@@ -8,7 +8,6 @@ const Agent = require("./Agent.js");
 const Appliance = require("./Appliance.js");
 const appInits = require("./applianceInits.js");
 
-
 // Setup 
 // -----
 
@@ -39,9 +38,8 @@ try {
     initial = true;  
 }
 
-console.log("[Settings]");
+console.log(">  Settings:");
 console.log(settings);
-console.log("[/Settings]");
 
 if(!initial) {
     // Change watchfulness with goal values
@@ -430,7 +428,11 @@ rooms.forEach((room) => {
     weekly.watchfulness[weekNum] = a.watchfulness_by_room[room.room_id];
     weekly.goals[(weekNum+1)] = weekly.totals[weekNum];
     room.weekly = weekly;
+
+    daily = dailyRoomData.find(o => room.room_id == o.room_id);
+    room.daily = daily;
 });
+
 
 // Add room totalData
 rooms.forEach((room) => {

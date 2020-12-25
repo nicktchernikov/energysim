@@ -17,38 +17,10 @@ app.set("view engine", "handlebars");
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
-// Set a PORT
+// PORT
 const PORT = process.env.PORT || 3000;
 
-// Start the server
-app.listen(PORT, () => {
-  console.log("Running server on port " + PORT + ".");
-});
-
-// Render Generate page (HTML)
-app.get('/generate', (_, res) => res.render('generate'));
-
-// Render Results page (HTML)
-app.get("/results", (req, res) => {
-  console.log(req.params.test);
-  filenames = fs.readdirSync(path.join(__dirname, "outputs"));
-  filename = filenames[0]; // Choose first filename in list
-
-  fs.readFile(path.join(__dirname, "outputs", filename), (err, data) => {
-    if (err) throw err;
-    let dataset = JSON.parse(data);
-    let filenames = fs.readdirSync(path.join(__dirname, "outputs"));
-    res.render("results", {
-      dataset,
-      filenames,
-      helpers: {
-        json: function (context) { return JSON.stringify(context); },
-      },
-    });
-  });
-});
-
-// Default sessionSettings and sessionHouse
+// Default sessionSettings and sessionHouse variables
 const sessionSettings = {
   days: 365,
   watchfulness: 0.01
@@ -58,7 +30,58 @@ const sessionHouse = [];
 // Load appliance data 
 const applianceInits = require("./applianceInits.js");
 
-// Get Ooutput Data as JSON as a callback
+// Start the server
+app.listen(PORT, () => {
+  console.log("Running server on port " + PORT + ".");
+});
+
+// Render Index page (HTML)
+app.get("/", (req, res) => {
+  res.render("index", {
+    sessionHouse: sessionHouse,
+    sessionSettings: sessionSettings,
+    helpers: {
+      json: function (context) { return JSON.stringify(context);}
+    }
+  });
+});
+
+// Render Generate page (HTML)
+app.get('/generate', (_, res) => res.render('generate'));
+
+// Render Results page (HTML)
+app.get("/results", (req, res) => {
+
+  let errors = false;
+
+  filenames = fs.readdirSync(path.join(__dirname, "outputs"));
+  if(filenames.length == 0) {
+    errors = true; 
+    res.status(200).json( {"Error" : "There are no output files"} );
+  } else {
+    filename = filenames[0]; // Choose first filename in list by default
+  }
+  
+  if(!errors) {
+    fs.readFile(path.join(__dirname, "outputs", filename), (err, data) => {
+      if (err) {
+        res.status(200).json({"Error" : "Cannot read output " + filename});
+        throw err;
+      }
+      let filename_dataset = JSON.parse(data);
+      let filenames = fs.readdirSync(path.join(__dirname, "outputs"));
+      res.render("results", {
+        filename_dataset,
+        filenames,
+        helpers: {
+          json: function (context) { return JSON.stringify(context); },
+        },
+      });
+    });
+  }
+});
+
+// Functionto get Output Data and pass JSON object into a callback
 function getOutputData(outputId, callback) {
   fs.readFile("./outputs/"+outputId+".json", "utf8", (err, data) => {
     callback(JSON.parse(data));
@@ -75,7 +98,7 @@ app.post('/post', (req, res) => {
 
 app.get('/getRoomIds/:outputId', (req, res) => {
   output_id = req.params.outputId;
-  console.log(output_id);
+  //console.log(output_id);
 
   room_ids = [];
   fs.readFile('./outputs/'+output_id+'.json', 'utf8', (err, read_file_response) => {
@@ -85,21 +108,10 @@ app.get('/getRoomIds/:outputId', (req, res) => {
     rooms.forEach((room) => {
       room_ids.push(room.room_id);
     });
-    console.log(room_ids);
+    //console.log(room_ids);
     res.json(room_ids);
   });
 
-});
-
-// Render 
-app.get("/", (req, res) => {
-  res.render("index", {
-    sessionHouse: sessionHouse,
-    sessionSettings: sessionSettings,
-    helpers: {
-      json: function (context) { return JSON.stringify(context);}
-    }
-  });
 });
 
 // Get applianceInits.js as JSON from frontend
@@ -197,7 +209,7 @@ app.post("/add-appliance", (req, res) => {
 app.post("/remove-appliance", (req, res) => {
   let room_id = req.body.room_id;
   let appliance_id = req.body.appliance_id;
-  ////console.log(room_id, appliance_id);
+  //console.log(room_id, appliance_id);
   let i = 0;
   sessionHouse.forEach((room) => {
     if (room.room_id === room_id) {
@@ -263,33 +275,40 @@ app.get("/iterativeOutputExists/:setupId", (req, res) => {
 app.post("/saveSetup", (req, res) => {
   settings = [];
   settings.push(req.body);
-
   rooms = sessionHouse;
 
+  let errors = false;
+  // -- Check if there are no rooms
   if(rooms.length == 0) {
-    res.json({"error" : "No rooms"});
+    res.json( {"error" : "No rooms"} );
+    errors = true;
+  } else {
+    // -- Check if any existing room has no appliances 
+    rooms.forEach((room) => {
+      if (room.appliances.length == 0) {
+        res.json( {"error" : "No appliances"} );
+        errors = true;
+      }
+    });
+
+    if(!errors) {
+      settings[0].watchfulness_by_room = {};
+      rooms.forEach((room) => {
+        settings[0].watchfulness_by_room[room.room_id] = parseFloat(settings[0].watchfulness);
+      });
+
+      data = [];
+      data.push({ settings });
+      data.push({ rooms });
+
+      json = JSON.stringify(data, null, 4);
+      fs.writeFile("./setups/" + req.body.setupId + ".json", json, (err) => {
+        if (err) throw err;
+        res.status(200).send();
+      });
+    }
   }
 
-  settings[0].watchfulness_by_room = {};
-  rooms.forEach((room) => {
-    settings[0].watchfulness_by_room[room.room_id] = parseFloat(settings[0].watchfulness);
-  });
-
-  // -- Check if any room has no appliances 
-  rooms.forEach((room) => {
-    console.log(room.appliances.length);
-    if (room.appliances.length == 0) res.json({"error" : "Empty"});
-  });
-
-  data = [];
-  data.push({ settings });
-  data.push({ rooms });
-
-  json = JSON.stringify(data, null, 4);
-  fs.writeFile("./setups/" + req.body.setupId + ".json", json, (err) => {
-    if (err) throw err;
-    res.status(200).send();
-  });
 });
 
 // Render Results page for specific Output id (HTML) 
@@ -319,7 +338,7 @@ app.get("/results/:results_filename_id/:type?", (req, res) => {
 
         settings = json_data[0];
         rooms = json_data[1];
-        // *do stuff with rooms here*
+        // *Can do stuff with rooms here*
         if (type == "total") {
           rooms.forEach((room) => {
             room.appliances.forEach((appliance) => {
@@ -403,7 +422,6 @@ app.get("/generate/:setupId", (req, res) => {
   let setupId = req.params.setupId;
   if(!setupId) throw "No Setup Id provided.";
 
-  // Run and invoke a callback when complete, e.g.
   runScript("./generateDaily.js", [setupId, true], function (err) {
     if (err) throw err;
   });
@@ -417,9 +435,7 @@ app.get("/generateIterative/:setupId", (req, res) =>{
   let setupId = req.params.setupId;
   if(!setupId) throw "No Setup Id provided.";
 
-  // Run and invoke a callback when complete, e.g.
   runScript("./generateIterative.js", [setupId], function (err) {
-
     if (err) {
       res.json({"done" : false});
       throw err;
@@ -429,7 +445,7 @@ app.get("/generateIterative/:setupId", (req, res) =>{
   });
 });
 
-// Chunk hours -> week and output as JSON
+// Chunk hours by week and output as JSON
 app.get("/weekly/:outputId", (req, res) => {
   getOutputData(req.params.outputId, (data) => {
     if(!data) { res.json({"status" : false}); }
@@ -438,7 +454,7 @@ app.get("/weekly/:outputId", (req, res) => {
     rooms.forEach((room) => {
       room.appliances.forEach((appliance) => {
         let y = appliance.data[0].y;
-        appliance.data[0].y = y.chunk(168);
+        appliance.data[0].y = y.chunk(168); // 168 = 4 timesteps per hour * 24 hours * 7 days
       });
       room.totalData = room.totalData[0].y.chunk(168);
     });
@@ -475,9 +491,9 @@ app.get("/weekly/:outputId/:weekNum", (req, res) => {
 app.get("/unity/:outputId", (req, res) => {
   //console.log("running");
   getOutputData(req.params.outputId, (data) => {
-    let weekly = [];
-    data[1].forEach((room) => weekly.push(room["weekly"]));
-    res.json(weekly);
+    let weeks_by_room = [];
+    data[1].forEach((room) => weeks_by_room.push(room["weekly"]));
+    res.json(weeks_by_room);
   });
 });
 
@@ -517,20 +533,20 @@ app.get("/generateWeekly", (_req, res) => {
   res.render("generateIterative");
 });
 
-app.get("/getWeeklySetup/:setupId", (req, res) => {
-  let setupId = req.params.setupId;
-  fs.readFile("./weeklySetups/"+setupId+".json", 'utf8', (err, data) => {
-    if(err) throw err;
-    res.json(data);
-  });
-}); 
+// app.get("/getWeeklySetup/:setupId", (req, res) => {
+//   let setupId = req.params.setupId;
+//   fs.readFile("./weeklySetups/"+setupId+".json", 'utf8', (err, data) => {
+//     if(err) throw err;
+//     res.json(data);
+//   });
+// }); 
 
 app.get("/unityGetCurrentWeek/:output_id", (req, res) => {
   fs.readFile("./outputs/"+req.params.output_id+".json", 'utf8', (err, data) => {
     let sim = JSON.parse(data);
     let settings = sim[0];
     let weekNum = settings.weekNum;
-    console.log(settings.weekNum);  
+    //console.log(settings.weekNum);  
     res.json([weekNum]);
   });
   
@@ -541,9 +557,7 @@ app.post("/generateIterative", (req, res) => {
   let outputId = req.body.outputId;
   let roomGoals = JSON.parse(req.body.roomGoals);
 
-  console.log(roomGoals);
-
-  // Change goals
+  // Rewrite new goals
   fs.readFile("./outputs/"+outputId+".json", 'utf8', (err, data) => {
     let sim = JSON.parse(data);
     let rooms = sim[1];
@@ -564,6 +578,7 @@ app.post("/generateIterative", (req, res) => {
     });
   });
 
+  // Run the generation script
   runScript("./generateIterative.js", [outputId], function(err) {
     if(err) {
       res.json({"done" : false})
@@ -610,7 +625,6 @@ app.post("/unityGenerateIterative", (req, res) => {
       if(roomGoals.length > 0) { 
         console.log(">  Wrote goals to ./outputs/"+outputId+".json");
       }
-
     });
   });
 
