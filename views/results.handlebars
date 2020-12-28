@@ -67,6 +67,14 @@
                     });
                     $('#plots').html(html);
                     $.each(appliances, (key, appliance) => {
+                        appliance.layout = {
+                            xaxis: {
+                                title: 'Hours'
+                            },
+                            yaxis: {
+                                title: 'Watts consumed (Cumulative)'
+                            }
+                        }
                         Plotly.newPlot(appliance.appliance_id, appliance.data, appliance.layout);
                     });
                 });

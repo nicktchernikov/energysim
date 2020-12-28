@@ -84,6 +84,7 @@ app.get("/results", (req, res) => {
 // Functionto get Output Data and pass JSON object into a callback
 function getOutputData(outputId, callback) {
   fs.readFile("./outputs/"+outputId+".json", "utf8", (err, data) => {
+    if(err) throw err;
     callback(JSON.parse(data));
   });
 }
@@ -488,13 +489,28 @@ app.get("/weekly/:outputId/:weekNum", (req, res) => {
 
 // Return only the weeklyData for an Outpud ID
 // * used within Unity
-app.get("/unity/:outputId", (req, res) => {
+app.get("/unity/:output_id", (req, res) => {
   //console.log("running");
-  getOutputData(req.params.outputId, (data) => {
-    let weeks_by_room = [];
-    data[1].forEach((room) => weeks_by_room.push(room["weekly"]));
-    res.json(weeks_by_room);
-  });
+  let output_id = req.params.output_id;
+  if(output_id.length > 0) {
+    getOutputData(output_id, (data) => {
+      let weeks_by_room = [];
+      let days_by_room = [];
+      rooms = data[1];
+      rooms.forEach((room) => {
+        weeks_by_room.push(room["weekly"]);
+        days_by_room.push(room["daily"]);
+      });
+      res.json(
+        {
+          "weeks_by_room" : weeks_by_room, 
+          "days_by_room" : days_by_room 
+        }
+      );
+    });
+  } else {
+    res.json( {error: "No output_id provided."} );
+  }
 });
 
 // Render weeks page (HTML) 

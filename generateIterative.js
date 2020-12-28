@@ -41,6 +41,13 @@ try {
 console.log(">  Settings:");
 console.log(settings);
 
+
+const globals = require("./globals");
+let min_watchfulness_increase = globals.min_watchfulness_increase;
+let max_watchfulness_increase = globals.max_watchfulness_increase;
+
+let watchfulness_increase_diff = max_watchfulness_increase - min_watchfulness_increase;
+
 if(!initial) {
     // Change watchfulness with goal values
     let watchfulness = settings.watchfulness;
@@ -59,14 +66,14 @@ if(!initial) {
         last_goal = parseInt(room.weekly.goals[room.weekly.goals.length-1]);
         last_total = parseInt(room.weekly.totals[room.weekly.totals.length-1]);
 
-        console.log("[last_goal, last_total]");
-        console.log(last_goal, last_total);
-        console.log("[/last_goal, last_total]");
-
         if(last_goal < last_total) {
+            let percentage = 1.0 - (parseFloat(last_goal) / parseFloat(last_total));
+            let watchfulness_increase = globals.min_watchfulness_increase + (watchfulness_increase_diff * percentage);
+
             // Adjust room watchfulness here
-            console.log("* Increasing " + room.room_id + " watchfulness!");
-            watchfulness_by_room[room.room_id] += 0.005;
+            console.log(" > Increasing " + room.room_id + " watchfulness by " + watchfulness_increase + "!");
+            watchfulness_by_room[room.room_id] += parseFloat(watchfulness_increase);
+            watchfulness_by_room[room.room_id] = Math.min(watchfulness_by_room[room.room_id], 0.99);
         }
     }
     
@@ -173,34 +180,63 @@ if(rooms.some(room => room.hasOwnProperty('weekly'))) {
 }
 
 // - Create dailyRoomData or use existing
-var dailyRoomData;
-try {
-    // Use existing
-    dailyRoomData = JSON.parse(fs.readFileSync("./dailyOutputs/"+setupId+".json"));
-    console.log(">  Using existing dailyRoomData");
-} catch (err) {
-    // Create new
-    dailyRoomData = [];
-    console.log(">  Creating new dailyRoomData");
 
+let dailyRoomData = [];
+if(rooms.some(room => room.hasOwnProperty('daily'))) {
+    // Use existing
+    rooms.forEach(room => {
+        dailyRoomData.push(room.daily);
+    });
+} else {
+    // Create new
     rooms.forEach(room => {
         let appliancesDaily = [];
         room.appliances.forEach(appliance => {
             appliancesDaily.push(
                 {
                     appliance_id : appliance.appliance_id,
-                    dailyTotal : [0,]
+                    dailyTotal : [0, ]
                 }
             );
         });
         dailyRoomData.push(
             {
-                room_id: room.room_id,
-                dailyTotal: [0,],
-                appliances: appliancesDaily
-            });
+                room_id : room.room_id,
+                dailyTotal : [0, ],
+                appliances : appliancesDaily
+            }
+        );
     });
 }
+
+// var dailyRoomData;
+// try {
+//     // Use existing
+//     dailyRoomData = JSON.parse(fs.readFileSync("./dailyOutputs/"+setupId+".json"));
+//     console.log(">  Using existing dailyRoomData");
+// } catch (err) {
+//     // Create new
+//     dailyRoomData = [];
+//     console.log(">  Creating new dailyRoomData");
+
+//     rooms.forEach(room => {
+//         let appliancesDaily = [];
+//         room.appliances.forEach(appliance => {
+//             appliancesDaily.push(
+//                 {
+//                     appliance_id : appliance.appliance_id,
+//                     dailyTotal : [0,]
+//                 }
+//             );
+//         });
+//         dailyRoomData.push(
+//             {
+//                 room_id: room.room_id,
+//                 dailyTotal: [0,],
+//                 appliances: appliancesDaily
+//             });
+//     });
+// }
 
 // - Motives for which appliances are randomly turned on 
 randomMotives = ['light', 'comfort', 'cleanliness', 'hygiene'];
@@ -246,9 +282,10 @@ for(timestep = 0; timestep < timesteps; timestep++) {
         // Tick day up one
         updateDayNum(newDayNum); 
         
-        console.log(
-            "[dayNum] " + dayNum + " [/dayNum]"
-        );
+        // for debugging
+        // console.log(
+        //     "[dayNum] " + dayNum + " [/dayNum]"
+        // );
 
         // Set next day up for each appliance
         dailyRoomData.forEach((data) => {
@@ -460,9 +497,9 @@ fs.writeFile("./outputs/"+setupId+".json", outputString, "utf8", (err) => {
     }
 });
 
-// Write cumulative data by day
-dailyRoomDataString = JSON.stringify(dailyRoomData);
-fs.writeFile("./dailyOutputs/"+setupId+".json", dailyRoomDataString, "utf8",(err, _) => {
-    if(err) throw err;
-    console.log(">  Wrote ./dailyOutputs/"+setupId+".json");
-});
+// // Write cumulative data by day
+// dailyRoomDataString = JSON.stringify(dailyRoomData);
+// fs.writeFile("./dailyOutputs/"+setupId+".json", dailyRoomDataString, "utf8",(err, _) => {
+//     if(err) throw err;
+//     console.log(">  Wrote ./dailyOutputs/"+setupId+".json");
+// });

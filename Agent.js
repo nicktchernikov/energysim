@@ -19,9 +19,12 @@ class Agent {
 
 	changeApplianceState(appliance) {
 		//console.log(appliance);
+		
 		this.current_room = appliance.in_room;
 		let room_app_is_in_watchfulness = parseFloat(this.watchfulness_by_room[this.current_room]);
 		
+		this.watchfulness = room_app_is_in_watchfulness;
+
 		// console.log("[in changeApplianceState]");
 		// console.log(appliance.id + " is in " + this.current_room);
 		// console.log("Agent's current watchfulness is " + room_app_is_in_watchfulness);
@@ -66,7 +69,7 @@ class Agent {
 		}
 
 		// Turn off an appliance if time is up 
-		if(appliance.timeleft == 0 && appliance.state == 1 && appliance.alwaysOn == false) {
+		if(appliance.timeleft == 0 && (appliance.state == 1 || appliance.state == 0) && appliance.alwaysOn == false) {
 			if(Math.random() > this.watchfulness) {
 				appliance.turnStandby();
 			} else {

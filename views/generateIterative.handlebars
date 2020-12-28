@@ -95,7 +95,7 @@
                 $.each($("table").find(".goal"), (key, value) => {
                     goal = $(value).val();
                     room_id = $(value).attr('id');
-                    if(goal && goal > 0) {
+                    if(goal !== null) {
                         roomGoals.push({
                             "room_id" : room_id,
                             "goal" : goal
@@ -147,11 +147,11 @@
                 html += '<th> goal </th>';
                 html += '<th> unit </th>';
                 html += '<th> next week goal </th>';
-                html += '<td> goal by %</td>';
+                html += '<td> goal %</td>';
                         
                 $.each(rooms, (_, room) => {
                     html += '<tr class="'+room.room_id+'"><td class="room_id">'+room.room_id+'</td>';
-                    html += '<td>'+room.weekly.watchfulness[weekNum]+'</td>';
+                    html += '<td>'+room.weekly.watchfulness[weekNum].toFixed(2)+'</td>';
                     html += '<td class="consumption">'+room.weekly.totals[parseInt(room.weekly.totals.length)-1]+'</td>';
                     total = parseInt(room.weekly.totals[parseInt(room.weekly.totals.length)-1]);
                     console.log(room.weekly.goals);
