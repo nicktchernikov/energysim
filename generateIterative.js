@@ -41,7 +41,6 @@ try {
 console.log(">  Settings:");
 console.log(settings);
 
-
 const globals = require("./globals");
 let min_watchfulness_increase = globals.min_watchfulness_increase;
 let max_watchfulness_increase = globals.max_watchfulness_increase;
