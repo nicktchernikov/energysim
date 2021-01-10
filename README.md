@@ -57,7 +57,7 @@ npm run server
 
 # Editing available rooms and appliances
 
-- Rooms
+## Rooms
 
 Line 174 of /views/index.handlebars
 
@@ -69,7 +69,7 @@ Line 174 of /views/index.handlebars
       ];
 ```
 
-- Appliances
+## Appliances
 
 /applianceInits.js
 
