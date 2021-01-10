@@ -54,3 +54,39 @@ npm run server
 - Results view
 
 ![generate view](https://raw.githubusercontent.com/nicktchernikov/energysim/master/documentation/images/results-2.PNG?raw=true)
+
+# Editing available rooms and appliances
+
+- Rooms
+
+Line 174 of /views/index.handlebars
+
+```
+      // Get room types 
+      let roomTypes = [
+        'bathroom', 'laundry room', 'bedroom', 
+        'living room', 'kitchen', 'basement'
+      ];
+```
+
+- Appliances
+
+/applianceInits.js
+
+example:
+
+``` 	
+{
+    type : 'fridge',
+    watts1 : 200,
+    watts2 : 25, 
+    min: false,
+    max: false,
+    motive: 'hunger',
+    alwaysOn: true,
+},
+```
+
+Currently available motives are:
+
+hunger, light, boredom, cleanliness, comfort)
