@@ -3,13 +3,15 @@
 EnergySim is an agent-based iterative electricty usage simulator. The code has an Agent class and an Appliance class, which interact to generate the data. The agent has a watchfulness value for each room of the house, which can be affected
 by setting consumption goals. 
 
-This project was created to be used by a project by Irem Sismanturk, Master's candidate at Simon Fraser University's Interactive Arts and Technology program. Irem's project is a "Smart Mirror" which shows a person how much electricy they are using by way of "units" (pieces of wood which slide in and out on frame of the mirror).
+This project was created to be used by a project by Irem Sismanturk, Master's candidate at Simon Fraser University's Interactive Arts and Technology program. 
+
+Irem's project is a "Smart Mirror" which shows a person how much electricy they are using by way of "units" (pieces of wood which slide in and out on frame of the mirror).
 
 The code was also made to interact with Unity for the purposes of the project.
 
 # Project structure 
 
-node.js, express, express-handlebars
+Project is in node.js, express, and express-handlebars
 
 - server.js runs with node on port 3000
 - /views folder contains front-end files for user interface in JSON format
@@ -23,8 +25,11 @@ node.js, express, express-handlebars
 
 # Installation
 
-- Clone the repository into a folder
-- From command line, run: 
+Prerequisites: have Node.js and NPM package manager installed
+
+- Clone or unzip the repository into a folder
+- Navigate to the folder
+- From the command line/terminal, run: 
 ``` 
 npm install 
 ```
@@ -32,7 +37,8 @@ npm install
 ```
 npm run server
 ```
-- Open the browser and type localhost:3000 in the address bar
+- Open a browser and type localhost:3000 in the address bar
+- You should see the Setup view as pictured below
 
 # User interface
 
