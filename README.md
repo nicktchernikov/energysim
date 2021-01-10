@@ -73,7 +73,7 @@ Line 174 of /views/index.handlebars
 
 /applianceInits.js
 
-  - Example of an appliance:
+  * Example of an appliance:
 
 ``` 	
 {
@@ -87,6 +87,6 @@ Line 174 of /views/index.handlebars
 },
 ```
 
-  - Currently available motives are:
+  * Currently available motives are:
 
 hunger, light, boredom, cleanliness, comfort)
