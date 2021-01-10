@@ -89,4 +89,4 @@ Line 174 of /views/index.handlebars
 
   * Currently available motives are:
 
-hunger, light, boredom, cleanliness, comfort)
+hunger, light, boredom, cleanliness, comfort
