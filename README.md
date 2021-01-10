@@ -42,16 +42,16 @@ npm run server
 
 # User interface
 
-- Setup view 
+## Setup view 
 
 ![setup view](https://raw.githubusercontent.com/nicktchernikov/energysim/master/documentation/images/setup.PNG?raw=true)
 
 
-- Generate view
+## Generate view
 
 ![generate view](https://raw.githubusercontent.com/nicktchernikov/energysim/master/documentation/images/generate.PNG?raw=true)
 
-- Results view
+## Results view
 
 ![generate view](https://raw.githubusercontent.com/nicktchernikov/energysim/master/documentation/images/results-2.PNG?raw=true)
 
