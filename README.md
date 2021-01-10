@@ -1,7 +1,7 @@
 # About
 
 EnergySim is an agent-based iterative electricty usage simulator. The code has an Agent class and an Appliance class, which interact to generate the data. The agent has a watchfulness value for each room of the house, which can be affected
-by setting consumption goals. 
+by setting consumption goals. These watchfulness values affect how often the agent completely turns off an appliance and how often they turn it on.
 
 This project was created to be used by a project by Irem Sismanturk, Master's candidate at Simon Fraser University's Interactive Arts and Technology program. 
 
