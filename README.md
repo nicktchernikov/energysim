@@ -38,13 +38,13 @@ npm run server
 
 # # Setup view 
 
-![setup view](https://github.com/nicktchernikov/energysim/blob/master/documentation/images/setup.png?raw=true)
+![setup view](https://github.com/nicktchernikov/energysim/master/documentation/images/setup.png?raw=true)
 
 
 # # Generate view
 
-![generate view](https://github.com/nicktchernikov/energysim/blob/master/documentation/images/generate.png?raw=true)
+![generate view](https://github.com/nicktchernikov/energysim/master/documentation/images/generate.png?raw=true)
 
 # # Results view
 
-![generate view](https://github.com/nicktchernikov/energysim/blob/master/documentation/images/results-2.png?raw=true)
+![generate view](https://github.com/nicktchernikov/energysim/master/documentation/images/results-2.png?raw=true)
