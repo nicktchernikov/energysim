@@ -16,7 +16,7 @@ node.js, express, express-handlebars
 - /setups contains the setups generated from user-interface in JSON format
 - /outputs contains the raw output files
 - globals.js contains:
-- - the minimum and maximum amount that watchfulness changes by
+  - the minimum and maximum amount that watchfulness changes by
 - helpers.js contins a few helpful functions 
 - Agent.js 
 - Appliance.js
