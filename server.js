@@ -55,6 +55,8 @@ app.get("/results", (req, res) => {
   let errors = false;
 
   filenames = fs.readdirSync(path.join(__dirname, "outputs"));
+  filenames = filenames.filter(f => f != '.gitkeep');
+
   if(filenames.length == 0) {
     errors = true; 
     res.status(200).json( {"Error" : "There are no output files"} );
@@ -244,6 +246,7 @@ app.get("/getSetups", (req, res) => {
     if (err) {
       res.json();
     } else {
+      files = files.filter(f => f != '.gitkeep');
       res.json(files);
     }
   });
